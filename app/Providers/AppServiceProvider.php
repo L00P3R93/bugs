@@ -2,9 +2,17 @@
 
 namespace App\Providers;
 
+use App\Models\Bug;
+use App\Models\User;
+use App\Models\Wallet;
+use App\Observers\BugObserver;
+use App\Observers\UserObserver;
+use App\Observers\WalletObserver;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -24,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configureObservers();
     }
 
     /**
@@ -31,6 +40,13 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function configureDefaults(): void
     {
+        Model::automaticallyEagerLoadRelationships();
+        Model::unguard();
+
+        if (app()->environment('production')) {
+            URL::forceHttps();
+        }
+
         Date::use(CarbonImmutable::class);
 
         DB::prohibitDestructiveCommands(
@@ -46,5 +62,12 @@ class AppServiceProvider extends ServiceProvider
                 ->uncompromised()
             : null,
         );
+    }
+
+    protected function configureObservers(): void
+    {
+        User::observe(UserObserver::class);
+        Wallet::observe(WalletObserver::class);
+        Bug::observe(BugObserver::class);
     }
 }

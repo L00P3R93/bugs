@@ -6,6 +6,7 @@ use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 class CreateNewUser implements CreatesNewUsers
@@ -24,10 +25,17 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
         ])->validate();
 
-        return User::create([
+        $user = User::create([
             'name' => $input['name'],
+            'username' => Str::slug($input['name']),
             'email' => $input['email'],
+            'phone' => $input['phone'],
             'password' => $input['password'],
         ]);
+
+        $user->assignRole('Tester');
+
+        // Don't automatically login, let Fortify handle it with proper redirect
+        return $user;
     }
 }
