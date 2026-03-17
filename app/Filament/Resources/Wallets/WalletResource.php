@@ -11,7 +11,6 @@ use App\Models\Wallet;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -21,7 +20,7 @@ class WalletResource extends Resource
 {
     protected static ?string $model = Wallet::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = 'hugeicons-wallet-02';
 
     protected static string|UnitEnum|null $navigationGroup = 'Wallets & Transactions';
 

@@ -11,7 +11,6 @@ use App\Models\Label;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -21,7 +20,7 @@ class LabelResource extends Resource
 {
     protected static ?string $model = Label::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = 'hugeicons-label-important';
 
     protected static string|UnitEnum|null $navigationGroup = 'Bug Management';
 

@@ -24,19 +24,23 @@ class BugsTable
                 TextColumn::make('reporter.name')
                     ->searchable(),
                 TextColumn::make('category.name')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('severity.name')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('title')
                     ->searchable(),
                 TextColumn::make('status')
                     ->badge()
                     ->searchable(),
                 TextColumn::make('duplicateOf.title')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('base_amount')
                     ->numeric()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('final_amount')
                     ->numeric()
                     ->sortable(),
@@ -44,7 +48,8 @@ class BugsTable
                     ->boolean(),
                 TextColumn::make('paid_at')
                     ->dateTime()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -62,8 +67,8 @@ class BugsTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
-                ViewAction::make(),
-                EditAction::make(),
+                ViewAction::make()->iconButton()->icon('hugeicons-file-view')->color('primary')->tooltip('View Bug Details'),
+                EditAction::make()->iconButton()->icon('hugeicons-note-edit')->color('info')->tooltip('Edit Bug'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

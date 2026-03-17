@@ -2,27 +2,23 @@
 
 namespace App\Observers;
 
+use App\Enums\BugStatus;
 use App\Models\Bug;
+use App\Models\Category;
+use App\Models\Severity;
 
 class BugObserver
 {
-    /**
-     * Handle the User "creating" event.
-     */
     public function creating(Bug $bug): void
     {
-        // Generate unique bug number if not already set
         if (! $bug->bug_no) {
             do {
                 $bugNo = 'BUG'.str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
             } while (Bug::query()->where('bug_no', $bugNo)->exists());
 
             $bug->bug_no = $bugNo;
-        } else {
-            $bugNo = $bug->bug_no;
         }
 
-        // Only set reporter_id and remarks if not seeding and user is authenticated
         if (! app()->runningInConsole() || app()->environment('testing')) {
             $user = auth()->user();
             if ($user) {
@@ -31,47 +27,83 @@ class BugObserver
         }
     }
 
-    /**
-     * Handle the Bug "created" event.
-     */
     public function created(Bug $bug): void
     {
         $bug->base_amount = $bug->getBaseAmount();
         $bug->final_amount = $bug->getFinalAmount();
-        $reporterName = $bug->reporter->name;
-        $bug->remarks = "Bug [{$bug->bug_no}] submitted by {$reporterName} on ".now()->toDateTimeString();
+        $bug->remarks = 'Bug '.self::badge($bug->bug_no, 'primary')
+            .' submitted by '.self::badge($bug->reporter->name, 'info')
+            .' on '.self::badge(now()->toDateTimeString(), 'gray');
         $bug->saveQuietly();
     }
 
-    /**
-     * Handle the Bug "updated" event.
-     */
-    public function updated(Bug $bugs): void
+    public function updated(Bug $bug): void
     {
-        //
+        $actor = self::badge(auth()->user()?->name ?? 'System', 'info');
+        $timestamp = self::badge(now()->toDateTimeString(), 'gray');
+        $newEntries = [];
+        $recalculateAmounts = false;
+
+        if ($bug->wasChanged('status')) {
+            $oldStatus = BugStatus::from($bug->getOriginal('status'));
+            $newEntries[] = 'Status changed from '.self::badge($oldStatus->getLabel(), 'gray')
+                .' to '.self::badge($bug->status->getLabel(), (string) $bug->status->getColor())
+                .' by '.$actor.' on '.$timestamp;
+        }
+
+        if ($bug->wasChanged('category_id')) {
+            $oldCategory = Category::query()->find($bug->getOriginal('category_id'));
+            $newEntries[] = 'Category changed from '.self::badge($oldCategory?->name ?? '—', 'gray')
+                .' to '.self::badge($bug->category->name, 'primary')
+                .' by '.$actor.' on '.$timestamp;
+            $recalculateAmounts = true;
+        }
+
+        if ($bug->wasChanged('severity_id')) {
+            $oldSeverity = Severity::query()->find($bug->getOriginal('severity_id'));
+            $newEntries[] = 'Severity changed from '.self::badge($oldSeverity?->name ?? '—', 'gray')
+                .' to '.self::badge($bug->severity->name, 'warning')
+                .' by '.$actor.' on '.$timestamp;
+            $recalculateAmounts = true;
+        }
+
+        if ($bug->wasChanged('is_paid') && $bug->is_paid) {
+            $newEntries[] = 'Bug awarded and marked as paid by '.$actor.' on '.$timestamp;
+        }
+
+        if ($recalculateAmounts) {
+            $bug->load(['category', 'severity']);
+            $bug->base_amount = $bug->getBaseAmount();
+            $bug->final_amount = $bug->getFinalAmount();
+        }
+
+        if (! empty($newEntries) || $recalculateAmounts) {
+            if (! empty($newEntries)) {
+                $existing = $bug->remarks ?? '';
+                $separator = $existing !== '' ? "\n" : '';
+                $bug->remarks = $existing.$separator.implode("\n", $newEntries);
+            }
+
+            $bug->saveQuietly();
+        }
     }
 
-    /**
-     * Handle the Bug "deleted" event.
-     */
-    public function deleted(Bug $bugs): void
-    {
-        //
-    }
+    public function deleted(Bug $bug): void {}
+
+    public function restored(Bug $bug): void {}
+
+    public function forceDeleted(Bug $bug): void {}
 
     /**
-     * Handle the Bug "restored" event.
+     * Generate a badge using Filament's own fi-badge CSS classes, which are
+     * always compiled into Filament's CSS and support dark mode out of the box.
      */
-    public function restored(Bug $bugs): void
+    private static function badge(string $text, string $color = 'gray'): string
     {
-        //
-    }
+        $safeColor = in_array($color, ['primary', 'success', 'danger', 'warning', 'info', 'gray'], true)
+            ? $color
+            : 'gray';
 
-    /**
-     * Handle the Bug "force deleted" event.
-     */
-    public function forceDeleted(Bug $bugs): void
-    {
-        //
+        return '<span class="fi-color fi-color-'.$safeColor.' fi-text-color-700 dark:fi-text-color-300 fi-badge fi-size-sm">'.e($text).'</span>';
     }
 }

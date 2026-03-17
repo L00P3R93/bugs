@@ -6,6 +6,7 @@ use App\Filament\Resources\Bugs\Pages\CreateBug;
 use App\Filament\Resources\Bugs\Pages\EditBug;
 use App\Filament\Resources\Bugs\Pages\ListBugs;
 use App\Filament\Resources\Bugs\Pages\ViewBug;
+use App\Filament\Resources\Bugs\RelationManagers\MediaRelationManager;
 use App\Filament\Resources\Bugs\Schemas\BugForm;
 use App\Filament\Resources\Bugs\Schemas\BugInfolist;
 use App\Filament\Resources\Bugs\Tables\BugsTable;
@@ -13,7 +14,6 @@ use App\Models\Bug;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -23,7 +23,7 @@ class BugResource extends Resource
 {
     protected static ?string $model = Bug::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = 'hugeicons-bug-02';
 
     protected static string|UnitEnum|null $navigationGroup = 'Bug Management';
 
@@ -49,7 +49,7 @@ class BugResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            MediaRelationManager::class,
         ];
     }
 

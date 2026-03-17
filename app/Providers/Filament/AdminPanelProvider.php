@@ -46,6 +46,19 @@ class AdminPanelProvider extends PanelProvider
             ->darkMode()
             ->colors([
                 'primary' => Color::Amber,
+                'secondary' => Color::Gray,
+                'info' => Color::Cyan,
+                'success' => Color::Green,
+                'warning' => Color::Yellow,
+                'danger' => Color::Red,
+                'purple' => Color::Purple,
+                'orange' => Color::Orange,
+                'blue' => Color::Blue,
+                'pink' => Color::Pink,
+                'teal' => Color::Teal,
+                'yellow' => Color::Yellow,
+                'red' => Color::Red,
+                'green' => Color::Green,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')

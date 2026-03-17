@@ -9,6 +9,7 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 
@@ -24,6 +25,7 @@ class SeveritiesTable
                     ->numeric()
                     ->sortable(),
                 IconColumn::make('is_active')
+                    ->label('Visible')
                     ->boolean(),
                 TextColumn::make('deleted_at')
                     ->dateTime()
@@ -39,10 +41,17 @@ class SeveritiesTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                SelectFilter::make('is_active')
+                    ->label('Visible')
+                    ->options([
+                        true => 'Yes',
+                        false => 'No',
+                    ])
+                    ->native(false),
                 TrashedFilter::make(),
             ])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()->iconButton()->icon('hugeicons-note-edit')->tooltip('Edit Severity'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

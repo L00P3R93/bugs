@@ -92,18 +92,10 @@ class Bug extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('images')
+        $this->addMediaCollection('attachments')
             ->useDisk('public')
             ->acceptsFile(fn ($file) => in_array($file->mimeType, [
-                'image/jpeg', 'image/png', 'image/jpg', 'image/gif',
-            ]))
-            ->singleFile();
-
-        $this->addMediaCollection('videos')
-            ->useDisk('public')
-            ->acceptsFile(fn ($file) => in_array($file->mimeType, [
-                'video/mp4', 'video/mov', 'video/avi', 'video/wmv',
-            ]))
-            ->singleFile();
+                'image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'video/mp4', 'video/mov', 'video/avi', 'video/wmv',
+            ]));
     }
 }

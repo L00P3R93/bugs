@@ -20,12 +20,12 @@ class CategoriesTable
             ->columns([
                 TextColumn::make('name')
                     ->searchable(),
-                TextColumn::make('slug')
-                    ->searchable(),
                 TextColumn::make('base_min_amount')
+                    ->label('Min Amount')
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('base_max_amount')
+                    ->label('Max Amount')
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('weight_multiplier')
@@ -34,7 +34,8 @@ class CategoriesTable
                 IconColumn::make('is_active')
                     ->boolean(),
                 IconColumn::make('is_featured')
-                    ->boolean(),
+                    ->boolean()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -52,7 +53,7 @@ class CategoriesTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()->iconButton()->icon('hugeicons-note-edit')->tooltip('Edit Category'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

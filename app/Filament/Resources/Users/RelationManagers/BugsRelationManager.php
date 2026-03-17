@@ -17,7 +17,7 @@ class BugsRelationManager extends RelationManager
     {
         return $table
             ->headerActions([
-                CreateAction::make(),
+                CreateAction::make()->icon('hugeicons-new-releases')->label('Submit A Bug')->color('teal'),
             ]);
     }
 }
