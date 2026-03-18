@@ -45,7 +45,7 @@ class BugObserver
         $recalculateAmounts = false;
 
         if ($bug->wasChanged('status')) {
-            $oldStatus = BugStatus::from($bug->getOriginal('status'));
+            $oldStatus = BugStatus::from($bug->getRawOriginal('status'));
             $newEntries[] = 'Status changed from '.self::badge($oldStatus->getLabel(), 'gray')
                 .' to '.self::badge($bug->status->getLabel(), (string) $bug->status->getColor())
                 .' by '.$actor.' on '.$timestamp;

@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Wallets;
 use App\Filament\Resources\Wallets\Pages\CreateWallet;
 use App\Filament\Resources\Wallets\Pages\EditWallet;
 use App\Filament\Resources\Wallets\Pages\ListWallets;
+use App\Filament\Resources\Wallets\RelationManagers\TransactionsRelationManager;
 use App\Filament\Resources\Wallets\Schemas\WalletForm;
 use App\Filament\Resources\Wallets\Tables\WalletsTable;
 use App\Models\Wallet;
@@ -41,7 +42,7 @@ class WalletResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            TransactionsRelationManager::class,
         ];
     }
 

@@ -30,7 +30,6 @@ class BugSeeder extends BaseSeeder
                     'wallet_id' => $wallet->id,
                     'bug_id' => $bug->id,
                     'amount' => $bug->final_amount,
-                    'type' => 'payout',
                     'status' => 'completed',
                 ]);
 

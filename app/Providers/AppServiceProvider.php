@@ -3,9 +3,11 @@
 namespace App\Providers;
 
 use App\Models\Bug;
+use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Observers\BugObserver;
+use App\Observers\TransactionObserver;
 use App\Observers\UserObserver;
 use App\Observers\WalletObserver;
 use Carbon\CarbonImmutable;
@@ -68,6 +70,7 @@ class AppServiceProvider extends ServiceProvider
     {
         User::observe(UserObserver::class);
         Wallet::observe(WalletObserver::class);
+        Transaction::observe(TransactionObserver::class);
         Bug::observe(BugObserver::class);
     }
 }

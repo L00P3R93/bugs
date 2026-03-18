@@ -6,6 +6,19 @@ use App\Models\Transaction;
 
 class TransactionObserver
 {
+    public function creating(Transaction $transaction): void
+    {
+        // Generate unique account number if not already set
+        if (! $transaction->transaction_no) {
+            do {
+                $transactionNo = 'TRS'.str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
+            } while (Transaction::query()->where('transaction_no', $transactionNo)->exists());
+
+            $transaction->transaction_no = $transactionNo;
+        }
+        $transaction->status = 'pending';
+    }
+
     /**
      * Handle the Transaction "created" event.
      */

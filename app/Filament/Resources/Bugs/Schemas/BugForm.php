@@ -111,10 +111,10 @@ class BugForm
                         ->label('Bug Status')
                         ->prefixIcon('hugeicons-status')
                         ->prefixIconColor('primary')
-                        ->options(BugStatus::class)
-                        ->default('submitted')
                         ->native(false)
                         ->searchable()
+                        ->options(BugStatus::class)
+                        ->default('submitted')
                         ->required()
                         ->visible(fn (?Bug $record) => $record !== null && auth()->user()->isSuperAdmin()),
                     Select::make('reporter_id')

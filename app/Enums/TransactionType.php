@@ -6,7 +6,6 @@ use BackedEnum;
 use Filament\Support\Contracts\HasColor;
 use Filament\Support\Contracts\HasIcon;
 use Filament\Support\Contracts\HasLabel;
-use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
 
 enum TransactionType: string implements HasColor, HasIcon, HasLabel
@@ -25,16 +24,16 @@ enum TransactionType: string implements HasColor, HasIcon, HasLabel
     public function getColor(): string|array|null
     {
         return match ($this) {
-            self::PAYOUT => 'info',
-            self::WITHDRAW => 'warning',
+            self::PAYOUT => 'purple',
+            self::WITHDRAW => 'orange',
         };
     }
 
     public function getIcon(): string|BackedEnum|Htmlable|null
     {
         return match ($this) {
-            self::PAYOUT => Heroicon::OutlinedQueueList,
-            self::WITHDRAW => Heroicon::OutlinedWallet,
+            self::PAYOUT => 'hugeicons-money-receive-square',
+            self::WITHDRAW => 'hugeicons-reverse-withdrawal-02',
         };
     }
 }

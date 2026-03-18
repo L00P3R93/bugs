@@ -7,6 +7,7 @@ use App\Filament\Resources\Bugs\Pages\EditBug;
 use App\Filament\Resources\Bugs\Pages\ListBugs;
 use App\Filament\Resources\Bugs\Pages\ViewBug;
 use App\Filament\Resources\Bugs\RelationManagers\MediaRelationManager;
+use App\Filament\Resources\Bugs\RelationManagers\TransactionsRelationManager;
 use App\Filament\Resources\Bugs\Schemas\BugForm;
 use App\Filament\Resources\Bugs\Schemas\BugInfolist;
 use App\Filament\Resources\Bugs\Tables\BugsTable;
@@ -50,6 +51,7 @@ class BugResource extends Resource
     {
         return [
             MediaRelationManager::class,
+            TransactionsRelationManager::class,
         ];
     }
 

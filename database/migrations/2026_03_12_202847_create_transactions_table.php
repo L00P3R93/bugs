@@ -14,11 +14,13 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
+            $table->string('transaction_no')->unique()->index();
             $table->foreignIdFor(Wallet::class)->constrained()->cascadeOnDelete();
             $table->decimal('amount', 10, 2)->default(0);
             $table->string('type')->default('payout'); // payout, withdraw
             $table->string('status')->default('pending');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
