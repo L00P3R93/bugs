@@ -19,7 +19,11 @@
       "Bash(rm pint_output.txt)",
       "Bash(\"C:/Users/EMILY/.config/herd/bin/php.bat\" vendor/bin/pint app/Filament/Pages/Dashboard.php app/Filament/Widgets/AdminBugStatsWidget.php app/Filament/Widgets/AdminTesterStatsWidget.php app/Filament/Widgets/AdminWalletStatsWidget.php app/Filament/Widgets/ActiveTestersTableWidget.php app/Filament/Widgets/MyBugStatsWidget.php app/Filament/Widgets/MyWalletStatsWidget.php app/Filament/Widgets/MyRecentBugsWidget.php app/Models/User.php app/Providers/Filament/AdminPanelProvider.php)",
       "Bash(\"C:/Users/EMILY/.config/herd/bin/php.bat\" artisan:*)",
-      "Bash(\"C:/Users/EMILY/.config/herd/bin/php.bat\" vendor/bin/pint app/Filament/Resources/Transactions/TransactionResource.php app/Filament/Resources/Transactions/Tables/TransactionsTable.php)"
+      "Bash(\"C:/Users/EMILY/.config/herd/bin/php.bat\" vendor/bin/pint app/Filament/Resources/Transactions/TransactionResource.php app/Filament/Resources/Transactions/Tables/TransactionsTable.php)",
+      "Bash(grep -r addNamespace C:UsersEMILYDocumentssitesbugs --include=*.php)",
+      "Bash(grep -r View:: C:UsersEMILYDocumentssitesbugs --include=*.php)",
+      "Bash(grep -r \"addNamespace\\\\|pages\" C:UsersEMILYDocumentssitesbugs/vendor/livewire --include=*.php)",
+      "Bash(\"C:/Users/EMILY/.config/herd/bin/php.bat\" vendor/bin/pint app/Concerns/ProfileValidationRules.php app/Actions/Fortify/CreateNewUser.php resources/views/pages/auth/register.blade.php resources/views/pages/auth/login.blade.php)"
     ]
   }
 }

@@ -23,6 +23,8 @@ class CreateNewUser implements CreatesNewUsers
         Validator::make($input, [
             ...$this->profileRules(),
             'password' => $this->passwordRules(),
+        ], [
+            'phone.regex' => 'The phone number must start with 0 or 254 and be followed by 9 digits (e.g. 0712345678 or 254712345678).',
         ])->validate();
 
         $user = User::create([
