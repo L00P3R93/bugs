@@ -36,7 +36,7 @@ class UsersTable
                         decimalPlaces: 2,
                         thousandsSeparator: ','
                     )
-                    ->summarize(Sum::make())
+                    ->summarize(Sum::make('Total Balance'))
                     ->sortable(),
                 TextColumn::make('email')
                     ->label('Email address')

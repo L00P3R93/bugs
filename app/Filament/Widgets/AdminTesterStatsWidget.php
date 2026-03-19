@@ -54,7 +54,7 @@ class AdminTesterStatsWidget extends BaseWidget
                 ->descriptionIcon('heroicon-m-user-plus')
                 ->color('warning'),
 
-            Stat::make('Verified Testers', number_format($verified))
+            /*Stat::make('Verified Testers', number_format($verified))
                 ->description('Email-verified accounts')
                 ->descriptionIcon('heroicon-m-check-badge')
                 ->color('success'),
@@ -62,7 +62,7 @@ class AdminTesterStatsWidget extends BaseWidget
             Stat::make('Unverified Testers', number_format($unverified))
                 ->description('Pending email verification')
                 ->descriptionIcon('heroicon-m-envelope')
-                ->color('danger'),
+                ->color('danger'),*/
         ];
     }
 }

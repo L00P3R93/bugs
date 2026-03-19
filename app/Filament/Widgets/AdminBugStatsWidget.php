@@ -71,10 +71,10 @@ class AdminBugStatsWidget extends BaseWidget
                 ->descriptionIcon('heroicon-m-document-text')
                 ->color('gray'),
 
-            Stat::make("Under Review ({$label})", number_format($underReview))
+            /*Stat::make("Under Review ({$label})", number_format($underReview))
                 ->description('Triaged, under review & validated')
                 ->descriptionIcon('heroicon-m-eye')
-                ->color('warning'),
+                ->color('warning'),*/
 
             Stat::make("Fixed ({$label})", number_format($fixed))
                 ->description('Successfully patched')
@@ -86,7 +86,7 @@ class AdminBugStatsWidget extends BaseWidget
                 ->descriptionIcon('heroicon-m-currency-dollar')
                 ->color('success'),
 
-            Stat::make("Closed ({$label})", number_format($closed))
+            /*Stat::make("Closed ({$label})", number_format($closed))
                 ->description('Closed without fix')
                 ->descriptionIcon('heroicon-m-lock-closed')
                 ->color('gray'),
@@ -94,7 +94,7 @@ class AdminBugStatsWidget extends BaseWidget
             Stat::make("Invalid ({$label})", number_format($invalid))
                 ->description("Rejected, duplicate or won't fix")
                 ->descriptionIcon('heroicon-m-x-circle')
-                ->color('danger'),
+                ->color('danger'),*/
         ];
     }
 }
