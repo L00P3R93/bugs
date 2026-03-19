@@ -3,7 +3,23 @@
     "allow": [
       "Bash(php artisan:*)",
       "mcp__laravel-boost__tinker",
-      "mcp__laravel-boost__search-docs"
+      "mcp__laravel-boost__search-docs",
+      "Bash(find /c/Users/EMILY/Documents/sites/bugs -type f \\\\\\(-name welcome.blade.php -o -path */auth/*blade.php -o -path */layouts/*blade.php -o -path */components/*blade.php \\\\\\))",
+      "Bash(find /c/Users/EMILY/Documents/sites/bugs/app/Livewire -type f -name *.php)",
+      "Bash(find /c/Users/EMILY/Documents/sites/bugs -type f -name *dashboard* -o -name *widget*)",
+      "Bash(vendor/bin/pint --dirty)",
+      "Bash(/c/Users/EMILY/AppData/Local/Herd/bin/php vendor/bin/pint --dirty)",
+      "Bash(where php:*)",
+      "Read(//c/Users/EMILY/AppData/Local/**)",
+      "Bash(php vendor/bin/pint --dirty)",
+      "Bash(cmd.exe /c \"php vendor/bin/pint --dirty\")",
+      "Bash(cmd.exe /c \"php vendor/bin/pint app/Filament/Pages/Dashboard.php app/Filament/Widgets/AdminBugStatsWidget.php app/Filament/Widgets/AdminTesterStatsWidget.php app/Filament/Widgets/AdminWalletStatsWidget.php app/Filament/Widgets/ActiveTestersTableWidget.php app/Filament/Widgets/MyBugStatsWidget.php app/Filament/Widgets/MyWalletStatsWidget.php app/Filament/Widgets/MyRecentBugsWidget.php app/Models/User.php app/Providers/Filament/AdminPanelProvider.php 2>&1\")",
+      "Bash(cmd.exe /c \"php vendor/bin/pint app/Filament/Pages/Dashboard.php app/Filament/Widgets/AdminBugStatsWidget.php app/Filament/Widgets/AdminTesterStatsWidget.php app/Filament/Widgets/AdminWalletStatsWidget.php app/Filament/Widgets/ActiveTestersTableWidget.php app/Filament/Widgets/MyBugStatsWidget.php app/Filament/Widgets/MyWalletStatsWidget.php app/Filament/Widgets/MyRecentBugsWidget.php app/Models/User.php app/Providers/Filament/AdminPanelProvider.php\")",
+      "Bash(cmd.exe /c \"php vendor/bin/pint --dirty > pint_output.txt 2>&1\")",
+      "Bash(rm pint_output.txt)",
+      "Bash(\"C:/Users/EMILY/.config/herd/bin/php.bat\" vendor/bin/pint app/Filament/Pages/Dashboard.php app/Filament/Widgets/AdminBugStatsWidget.php app/Filament/Widgets/AdminTesterStatsWidget.php app/Filament/Widgets/AdminWalletStatsWidget.php app/Filament/Widgets/ActiveTestersTableWidget.php app/Filament/Widgets/MyBugStatsWidget.php app/Filament/Widgets/MyWalletStatsWidget.php app/Filament/Widgets/MyRecentBugsWidget.php app/Models/User.php app/Providers/Filament/AdminPanelProvider.php)",
+      "Bash(\"C:/Users/EMILY/.config/herd/bin/php.bat\" artisan:*)",
+      "Bash(\"C:/Users/EMILY/.config/herd/bin/php.bat\" vendor/bin/pint app/Filament/Resources/Transactions/TransactionResource.php app/Filament/Resources/Transactions/Tables/TransactionsTable.php)"
     ]
   }
 }

@@ -62,6 +62,21 @@ class TransactionResource extends Resource
         ];
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery()->withoutGlobalScopes([SoftDeletingScope::class]);
+
+        if (auth()->user()?->isAdmin()) {
+            return $query;
+        }
+
+        // Testers only see transactions belonging to their own wallet
+        return $query->whereHas(
+            'wallet',
+            fn (Builder $q) => $q->where('user_id', auth()->id())
+        );
+    }
+
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
         return parent::getRecordRouteBindingEloquentQuery()

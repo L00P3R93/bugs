@@ -10,7 +10,7 @@ class RoleSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->command->warn(PHP_EOL.'Creating Roles and Permissions...');
+        $this->command?->warn(PHP_EOL.'Creating Roles and Permissions...');
 
         // Define Permissions
         $permissions = [
@@ -59,7 +59,6 @@ class RoleSeeder extends Seeder
                 'view_bugs', 'view_bug', 'create_bug', 'update_bug',
                 'view_reviews', 'view_review',
                 'view_comments', 'view_comment', 'create_comment',
-                'view_wallets', 'view_wallet', 'create_wallet',
                 'view_transactions', 'view_transaction', 'create_transaction', 'update_transaction',
             ],
         ];
@@ -69,6 +68,6 @@ class RoleSeeder extends Seeder
             $role->syncPermissions($perms);
         }
 
-        $this->command->info('Roles and permissions seeded successfully.');
+        $this->command?->info('Roles and permissions seeded successfully.');
     }
 }

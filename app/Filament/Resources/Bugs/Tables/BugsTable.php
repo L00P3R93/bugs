@@ -12,12 +12,19 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class BugsTable
 {
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(function (Builder $query) {
+                auth()->user()->isAdmin()
+                    ? $query->with('reporter')
+                    : $query->where('reporter_id', auth()->id());
+            })
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('bug_no')
                     ->searchable(),
