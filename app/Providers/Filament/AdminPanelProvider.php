@@ -63,6 +63,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([])
             ->navigationGroups([
+                'Kadi Games',
                 'Wallets & Transactions',
                 'Bug Management',
                 'User Management',

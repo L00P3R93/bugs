@@ -14,6 +14,8 @@ class AdminTesterStatsWidget extends BaseWidget
 
     protected static ?int $sort = 2;
 
+    protected ?string $heading = 'Testers Joined';
+
     public static function canView(): bool
     {
         return auth()->user()?->isAdmin() ?? false;

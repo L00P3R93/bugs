@@ -13,7 +13,7 @@ class ListWallets extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            CreateAction::make()->icon('hugeicons-plus-sign-circle')->label('New Wallet')->color('teal'),
         ];
     }
 }

@@ -2,7 +2,7 @@
     $key = Illuminate\Support\Str::random();
 @endphp
 
-<div class="flex justify-end w-full mt-6">
+<div class="flex justify-end w-full mt-6" style="margin-top: 1.5rem;">
     <x-filament::button
         wire:click="save"
         type="submit"

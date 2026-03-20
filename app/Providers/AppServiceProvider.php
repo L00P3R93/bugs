@@ -10,6 +10,7 @@ use App\Observers\BugObserver;
 use App\Observers\TransactionObserver;
 use App\Observers\UserObserver;
 use App\Observers\WalletObserver;
+use App\Services\KadiApiService;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Date;
@@ -25,7 +26,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(KadiApiService::class, function ($app) {
+            return new KadiApiService;
+        });
     }
 
     /**

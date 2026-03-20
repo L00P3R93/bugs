@@ -11,12 +11,15 @@ use App\Filament\Resources\Users\RelationManagers\WalletRelationManager;
 use App\Filament\Resources\Users\Schemas\UserForm;
 use App\Filament\Resources\Users\Schemas\UserInfolist;
 use App\Filament\Resources\Users\Tables\UsersTable;
+use App\Filament\Resources\Users\Widgets\UserStats;
 use App\Models\User;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
 class UserResource extends Resource
@@ -54,6 +57,13 @@ class UserResource extends Resource
         ];
     }
 
+    public static function getWidgets(): array
+    {
+        return [
+            UserStats::class,
+        ];
+    }
+
     public static function getPages(): array
     {
         return [
@@ -62,5 +72,22 @@ class UserResource extends Resource
             'view' => ViewUser::route('/{record}'),
             'edit' => EditUser::route('/{record}/edit'),
         ];
+    }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['username', 'email', 'account_no', 'phone'];
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        return [
+            'Wallet' => optional($record->wallet)->balance,
+        ];
+    }
+
+    public static function getGlobalSearchEloquentQuery(): Builder
+    {
+        return parent::getGlobalSearchEloquentQuery()->with(['wallet']);
     }
 }

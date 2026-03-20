@@ -131,6 +131,11 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
         return $this->hasRole('Tester') && ! $this->isAdmin();
     }
 
+    public function isLinked(): bool
+    {
+        return $this->linked_id !== null;
+    }
+
     /**
      * Set the phone attribute - convert 0 prefix to 254 for storage
      */

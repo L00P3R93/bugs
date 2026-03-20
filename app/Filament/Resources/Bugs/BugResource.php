@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Bugs;
 
+use App\Enums\BugStatus;
 use App\Filament\Resources\Bugs\Pages\CreateBug;
 use App\Filament\Resources\Bugs\Pages\EditBug;
 use App\Filament\Resources\Bugs\Pages\ListBugs;
@@ -11,6 +12,7 @@ use App\Filament\Resources\Bugs\RelationManagers\TransactionsRelationManager;
 use App\Filament\Resources\Bugs\Schemas\BugForm;
 use App\Filament\Resources\Bugs\Schemas\BugInfolist;
 use App\Filament\Resources\Bugs\Tables\BugsTable;
+use App\Filament\Resources\Bugs\Widgets\BugStats;
 use App\Models\Bug;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -55,6 +57,13 @@ class BugResource extends Resource
         ];
     }
 
+    public static function getWidgets(): array
+    {
+        return [
+            BugStats::class,
+        ];
+    }
+
     public static function getPages(): array
     {
         return [
@@ -71,5 +80,22 @@ class BugResource extends Resource
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        $modelClass = static::$model;
+        if (auth()->user()->isAdmin()) {
+            $submittedBugs = $modelClass::query()->with('reporter')->whereIn('status', [BugStatus::SUBMITTED, BugStatus::UNDER_REVIEW])->count();
+        } else {
+            $submittedBugs = $modelClass::query()->whereIn('status', [BugStatus::SUBMITTED, BugStatus::UNDER_REVIEW])->where('reporter_id', auth()->user()->id)->count();
+        }
+
+        return $submittedBugs > 0 ? (string) $submittedBugs : null;
+    }
+
+    public static function getNavigationBadgeColor(): string|array|null
+    {
+        return 'teal';
     }
 }

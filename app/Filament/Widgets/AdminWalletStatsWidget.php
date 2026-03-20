@@ -18,6 +18,8 @@ class AdminWalletStatsWidget extends BaseWidget
 
     protected static ?int $sort = 3;
 
+    protected ?string $heading = 'Bugs Wallet & Transactions Summary';
+
     public static function canView(): bool
     {
         return auth()->user()?->isAdmin() ?? false;

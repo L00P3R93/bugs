@@ -23,7 +23,17 @@
       "Bash(grep -r addNamespace C:UsersEMILYDocumentssitesbugs --include=*.php)",
       "Bash(grep -r View:: C:UsersEMILYDocumentssitesbugs --include=*.php)",
       "Bash(grep -r \"addNamespace\\\\|pages\" C:UsersEMILYDocumentssitesbugs/vendor/livewire --include=*.php)",
-      "Bash(\"C:/Users/EMILY/.config/herd/bin/php.bat\" vendor/bin/pint app/Concerns/ProfileValidationRules.php app/Actions/Fortify/CreateNewUser.php resources/views/pages/auth/register.blade.php resources/views/pages/auth/login.blade.php)"
+      "Bash(\"C:/Users/EMILY/.config/herd/bin/php.bat\" vendor/bin/pint app/Concerns/ProfileValidationRules.php app/Actions/Fortify/CreateNewUser.php resources/views/pages/auth/register.blade.php resources/views/pages/auth/login.blade.php)",
+      "Bash(vendor/bin/pint --dirty app/Filament/Pages/AccountsList.php)",
+      "Bash(C:UsersEMILY.configherdbinphp.bat vendor/bin/pint --dirty app/Filament/Actions/KadiWalletAction.php app/Filament/Pages/AccountsList.php)",
+      "Bash(\"/c/Users/EMILY/.config/herd/bin/php.bat\" vendor/bin/pint --dirty app/Filament/Actions/KadiWalletAction.php app/Filament/Pages/AccountsList.php)",
+      "Bash(\"/c/Users/EMILY/.config/herd/bin/php.bat\" vendor/bin/pint --dirty app/Filament/Pages/AccountsList.php)",
+      "Bash(\"/c/Users/EMILY/.config/herd/bin/php.bat\" vendor/bin/pint --dirty app/Filament/Pages/EditProfilePage.php)",
+      "Bash(\"/c/Users/EMILY/.config/herd/bin/php.bat\" vendor/bin/pint --dirty database/migrations/2026_03_20_175422_add_accounts_foreign_key_users_table.php)",
+      "Bash(C:UsersEMILY.configherdbinphp.bat vendor/bin/pint --dirty)",
+      "Bash(/c/Users/EMILY/.config/herd/bin/php.bat vendor/bin/pint --dirty)",
+      "mcp__laravel-boost__list-artisan-commands",
+      "Bash(/c/Users/EMILY/.config/herd/bin/php.bat artisan:*)"
     ]
   }
 }
