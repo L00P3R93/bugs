@@ -63,6 +63,18 @@ class KadiApiService
     }
 
     /**
+     * Register a new customer in KadiApi.
+     *
+     * @throws RequestException|ConnectionException
+     */
+    public function createCustomer(array $data): array
+    {
+        return $this->http->post('customers', $data)
+            ->throw()
+            ->json() ?? [];
+    }
+
+    /**
      * Make a DELETE request
      *
      * @throws RequestException|ConnectionException

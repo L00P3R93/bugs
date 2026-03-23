@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Listeners\HandleEmailVerified;
 use App\Models\Bug;
 use App\Models\Transaction;
 use App\Models\User;
@@ -12,9 +13,11 @@ use App\Observers\UserObserver;
 use App\Observers\WalletObserver;
 use App\Services\KadiApiService;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -38,6 +41,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureObservers();
+        $this->configureEvents();
     }
 
     /**
@@ -75,5 +79,10 @@ class AppServiceProvider extends ServiceProvider
         Wallet::observe(WalletObserver::class);
         Transaction::observe(TransactionObserver::class);
         Bug::observe(BugObserver::class);
+    }
+
+    protected function configureEvents(): void
+    {
+        Event::listen(Verified::class, HandleEmailVerified::class);
     }
 }

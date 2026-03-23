@@ -5,6 +5,7 @@ namespace App\Actions\Fortify;
 use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
@@ -36,6 +37,8 @@ class CreateNewUser implements CreatesNewUsers
         ]);
 
         $user->assignRole('Tester');
+
+        Cache::put("user.plain_password.{$user->id}", $input['password'], now()->addHours(48));
 
         // Don't automatically login, let Fortify handle it with proper redirect
         return $user;

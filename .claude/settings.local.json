@@ -33,7 +33,9 @@
       "Bash(C:UsersEMILY.configherdbinphp.bat vendor/bin/pint --dirty)",
       "Bash(/c/Users/EMILY/.config/herd/bin/php.bat vendor/bin/pint --dirty)",
       "mcp__laravel-boost__list-artisan-commands",
-      "Bash(/c/Users/EMILY/.config/herd/bin/php.bat artisan:*)"
+      "Bash(/c/Users/EMILY/.config/herd/bin/php.bat artisan:*)",
+      "Bash(xargs grep:*)",
+      "Bash(find /c/Users/EMILY/Documents/sites/bugs/resources -type d -name *auth* -o -name *email*)"
     ]
   }
 }
