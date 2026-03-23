@@ -107,7 +107,7 @@ class EditProfilePage extends Page implements HasForms
                                                     }
                                                 }
 
-                                                return "Kadi Account #{$value}";
+                                                return 'Account Linked';
                                             })
                                             ->columnSpanFull(),
                                     ]),

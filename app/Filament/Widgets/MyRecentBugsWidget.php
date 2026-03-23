@@ -22,7 +22,7 @@ class MyRecentBugsWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return auth()->user()?->isTester() ?? false;
+        return auth()->user()?->hasAnyRole(['Tester', 'Player']) ?? false;
     }
 
     public function table(Table $table): Table

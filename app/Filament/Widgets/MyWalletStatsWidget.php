@@ -15,9 +15,11 @@ class MyWalletStatsWidget extends BaseWidget
 
     protected static ?int $sort = 2;
 
+    protected ?string $heading = 'Bugs Wallet & Transactions Summary';
+
     public static function canView(): bool
     {
-        return auth()->user()?->isTester() ?? false;
+        return auth()->user()?->hasAnyRole(['Tester', 'Player']) ?? false;
     }
 
     protected function getStats(): array

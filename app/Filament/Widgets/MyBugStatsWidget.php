@@ -7,6 +7,8 @@ use App\Models\Bug;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Flowframe\Trend\Trend;
+use Flowframe\Trend\TrendValue;
 use Illuminate\Database\Eloquent\Builder;
 
 class MyBugStatsWidget extends BaseWidget
@@ -19,9 +21,11 @@ class MyBugStatsWidget extends BaseWidget
 
     protected static ?int $sort = 1;
 
+    protected ?string $heading = 'Bugs Summary';
+
     public static function canView(): bool
     {
-        return auth()->user()?->isTester() ?? false;
+        return auth()->user()?->hasAnyRole(['Tester', 'Player']) ?? false;
     }
 
     protected function applyPeriodFilter(Builder $query, string $column = 'created_at'): Builder
@@ -58,52 +62,68 @@ class MyBugStatsWidget extends BaseWidget
         $underReview = $baseQuery()
             ->whereIn('status', [BugStatus::UNDER_REVIEW, BugStatus::TRIAGED, BugStatus::VALIDATED])
             ->count();
+        $totalSubmitted = $submitted + $underReview;
         $fixed = $baseQuery()->where('status', BugStatus::FIXED)->count();
         $paid = $baseQuery()->where('status', BugStatus::PAID)->count();
         $closed = $baseQuery()->where('status', BugStatus::CLOSED)->count();
-        $invalid = $baseQuery()
-            ->whereIn('status', [BugStatus::REJECTED, BugStatus::WONT_FIX, BugStatus::DUPLICATE])
-            ->count();
+        $totalFixed = $fixed + $closed;
+
         $totalEarned = (float) Bug::query()
             ->where('reporter_id', $user->id)
             ->where('status', BugStatus::PAID)
             ->sum('final_amount');
 
+        $bugsData = Trend::model(Bug::class)
+            ->between(
+                start: now()->startOfYear(),
+                end: now()->endOfYear(),
+            )
+            ->perMonth()
+            ->count();
+
+        $submittedData = Trend::query(Bug::query()->whereIn('status', [BugStatus::SUBMITTED, BugStatus::UNDER_REVIEW]))
+            ->between(start: now()->startOfYear(), end: now()->endOfYear())
+            ->perMonth()
+            ->count();
+
+        $fixedData = Trend::query(Bug::query()->whereIn('status', [BugStatus::FIXED, BugStatus::CLOSED]))
+            ->between(start: now()->startOfYear(), end: now()->endOfYear())
+            ->perMonth()
+            ->count();
+
+        $paidData = Trend::query(Bug::query()->where('status', BugStatus::PAID))
+            ->between(start: now()->startOfYear(), end: now()->endOfYear())
+            ->perMonth()
+            ->count();
+
         return [
-            Stat::make("My Bugs ({$label})", number_format($total))
-                ->description('Total bugs you have reported')
+            Stat::make('Total Bugs', format_number($total))
+                ->icon('hugeicons-bug-02')
+                ->description('All bugs uploaded')
                 ->descriptionIcon('heroicon-m-bug-ant')
+                ->chart($bugsData->map(fn (TrendValue $value) => $value->aggregate)->toArray())
                 ->color('primary'),
 
-            Stat::make("Submitted ({$label})", number_format($submitted))
-                ->description('Awaiting review')
+            Stat::make('Submitted', format_number($totalSubmitted))
+                ->icon('heroicon-o-document')
+                ->description('Submitted & Under Review Bugs')
                 ->descriptionIcon('heroicon-m-document-text')
-                ->color('gray'),
+                ->chart($submittedData->map(fn (TrendValue $value) => $value->aggregate)->toArray())
+                ->color('teal'),
 
-            Stat::make("Under Review ({$label})", number_format($underReview))
-                ->description('Being reviewed by the team')
-                ->descriptionIcon('heroicon-m-eye')
-                ->color('warning'),
-
-            Stat::make("Fixed ({$label})", number_format($fixed))
-                ->description('Your bugs that were fixed')
+            Stat::make('Fixed', format_number($totalFixed))
+                ->icon('hugeicons-wrench-01')
+                ->description('Successfully patched & Closed')
                 ->descriptionIcon('heroicon-m-wrench-screwdriver')
-                ->color('success'),
+                ->chart($fixedData->map(fn (TrendValue $value) => $value->aggregate)->toArray())
+                ->color('purple'),
 
-            Stat::make("Paid ({$label})", number_format($paid))
-                ->description('Bugs you were rewarded for')
+            Stat::make('Paid', format_number($paid))
+                ->icon('hugeicons-receipt-dollar')
+                ->description('Rewarded to testers')
                 ->descriptionIcon('heroicon-m-currency-dollar')
+                ->chart($paidData->map(fn (TrendValue $value) => $value->aggregate)->toArray())
                 ->color('success'),
-
-            Stat::make("Closed ({$label})", number_format($closed))
-                ->description('Closed without fix')
-                ->descriptionIcon('heroicon-m-lock-closed')
-                ->color('gray'),
-
-            Stat::make("Invalid ({$label})", number_format($invalid))
-                ->description("Rejected, duplicate or won't fix")
-                ->descriptionIcon('heroicon-m-x-circle')
-                ->color('danger'),
 
             Stat::make('Total Earnings', number_format($totalEarned, 2))
                 ->description('All-time earnings from paid bugs')

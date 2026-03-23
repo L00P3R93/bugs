@@ -2,10 +2,15 @@
 
 namespace App\Observers;
 
+use App\Enums\TransactionType;
 use App\Models\Transaction;
+use App\Models\Withdraw;
 
 class TransactionObserver
 {
+    /**
+     * @throws \Exception
+     */
     public function creating(Transaction $transaction): void
     {
         // Generate unique account number if not already set
@@ -17,14 +22,41 @@ class TransactionObserver
             $transaction->transaction_no = $transactionNo;
         }
         $transaction->status = 'pending';
+
+        if ($transaction->type === TransactionType::WITHDRAW) {
+            $wallet = $transaction->wallet;
+            if ($wallet->balance < $transaction->amount) {
+                throw new \Exception('Insufficient balance');
+            }
+        }
     }
 
     /**
      * Handle the Transaction "created" event.
+     *
+     * @throws \Exception
      */
     public function created(Transaction $transaction): void
     {
-        //
+        $wallet = $transaction->wallet;
+        if ($transaction->type === TransactionType::PAYOUT) {
+            $wallet->increment('balance', $transaction->amount);
+        } elseif ($transaction->type === TransactionType::WITHDRAW) {
+            if ($wallet->balance < $transaction->amount) {
+                throw new \Exception('Insufficient balance');
+            }
+            $wallet->decrement('balance', $transaction->amount);
+            $user = $wallet->user;
+            Withdraw::query()->create([
+                'transaction_id' => $transaction->id,
+                'wallet_id' => $wallet->id,
+                'phone' => $user->phone,
+                'amount' => $transaction->amount,
+                'balance' => $wallet->balance,
+            ]);
+        }
+        $transaction->status = 'completed';
+        $transaction->saveQuietly();
     }
 
     /**
