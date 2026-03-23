@@ -41,7 +41,7 @@ class ProcessVerifiedUser implements ShouldQueue
                 'account_no' => $this->user->account_no,
                 'name' => $this->user->name,
                 'email' => $this->user->email,
-                'id_no' => (string) $this->user->id,
+                'id_no' => (string) $this->user->account_no,
                 'phone_no' => $this->user->phone,
             ]);
 
