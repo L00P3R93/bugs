@@ -2,9 +2,11 @@
 
 namespace App\Observers;
 
+use App\Enums\TransactionStatus;
 use App\Enums\TransactionType;
 use App\Models\Transaction;
 use App\Models\Withdraw;
+use Illuminate\Support\Facades\DB;
 
 class TransactionObserver
 {
@@ -13,7 +15,6 @@ class TransactionObserver
      */
     public function creating(Transaction $transaction): void
     {
-        // Generate unique account number if not already set
         if (! $transaction->transaction_no) {
             do {
                 $transactionNo = 'TRS'.str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
@@ -21,7 +22,8 @@ class TransactionObserver
 
             $transaction->transaction_no = $transactionNo;
         }
-        $transaction->status = 'pending';
+
+        $transaction->status = TransactionStatus::PENDING;
 
         if ($transaction->type === TransactionType::WITHDRAW) {
             $wallet = $transaction->wallet;
@@ -35,28 +37,40 @@ class TransactionObserver
      * Handle the Transaction "created" event.
      *
      * @throws \Exception
+     * @throws \Throwable
      */
     public function created(Transaction $transaction): void
     {
-        $wallet = $transaction->wallet;
-        if ($transaction->type === TransactionType::PAYOUT) {
-            $wallet->increment('balance', $transaction->amount);
-        } elseif ($transaction->type === TransactionType::WITHDRAW) {
-            if ($wallet->balance < $transaction->amount) {
-                throw new \Exception('Insufficient balance');
-            }
-            $wallet->decrement('balance', $transaction->amount);
-            $user = $wallet->user;
-            Withdraw::query()->create([
-                'transaction_id' => $transaction->id,
-                'wallet_id' => $wallet->id,
-                'phone' => $user->phone,
-                'amount' => $transaction->amount,
-                'balance' => $wallet->balance,
-            ]);
+        try {
+            DB::transaction(function () use ($transaction): void {
+                $wallet = $transaction->wallet()->lockForUpdate()->first();
+
+                if ($transaction->type === TransactionType::PAYOUT) {
+                    $wallet->increment('balance', $transaction->amount);
+                } elseif ($transaction->type === TransactionType::WITHDRAW) {
+                    if ($wallet->balance < $transaction->amount) {
+                        throw new \Exception('Insufficient balance');
+                    }
+                    $wallet->decrement('balance', $transaction->amount);
+                    $user = $wallet->user;
+                    Withdraw::query()->create([
+                        'transaction_id' => $transaction->id,
+                        'wallet_id' => $wallet->id,
+                        'phone' => $user->phone,
+                        'amount' => $transaction->amount,
+                        'balance' => $wallet->balance,
+                    ]);
+                }
+
+                $transaction->status = TransactionStatus::COMPLETED;
+                $transaction->saveQuietly();
+            });
+        } catch (\Exception $e) {
+            $transaction->status = TransactionStatus::FAILED;
+            $transaction->saveQuietly();
+
+            throw $e;
         }
-        $transaction->status = 'completed';
-        $transaction->saveQuietly();
     }
 
     /**

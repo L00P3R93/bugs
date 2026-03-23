@@ -35,7 +35,9 @@
       "mcp__laravel-boost__list-artisan-commands",
       "Bash(/c/Users/EMILY/.config/herd/bin/php.bat artisan:*)",
       "Bash(xargs grep:*)",
-      "Bash(find /c/Users/EMILY/Documents/sites/bugs/resources -type d -name *auth* -o -name *email*)"
+      "Bash(find /c/Users/EMILY/Documents/sites/bugs/resources -type d -name *auth* -o -name *email*)",
+      "Bash(vendor/bin/pint --dirty app/Observers/TransactionObserver.php)",
+      "Bash(./vendor/bin/pint --dirty app/Observers/TransactionObserver.php)"
     ]
   }
 }
