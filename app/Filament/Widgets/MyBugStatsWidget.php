@@ -17,7 +17,7 @@ class MyBugStatsWidget extends BaseWidget
 
     protected ?string $pollingInterval = null;
 
-    protected int|string|array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 4;
 
     protected static ?int $sort = 1;
 
