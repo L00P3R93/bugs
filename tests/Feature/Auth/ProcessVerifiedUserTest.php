@@ -21,7 +21,7 @@ beforeEach(function () {
     ]]);
 
     DB::connection('kadi')->statement(
-        'CREATE TABLE IF NOT EXISTS accounts (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, phone TEXT, email TEXT, password TEXT)'
+        'CREATE TABLE IF NOT EXISTS accounts (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, phone TEXT, email TEXT, password TEXT, outh INTEGER)'
     );
 });
 
@@ -76,7 +76,8 @@ test('ProcessVerifiedUser inserts registration password into kadi database', fun
         ->and($record->name)->toBe($user->name)
         ->and($record->email)->toBe($user->email)
         ->and($record->phone)->toBe($user->phone)
-        ->and($record->password)->toBe('Secret@123');
+        ->and($record->password)->toBe('Secret@123')
+        ->and($record->outh)->toBe(1);
 });
 
 test('ProcessVerifiedUser sends welcome email with the registration password', function () {

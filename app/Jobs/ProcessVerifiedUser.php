@@ -25,15 +25,15 @@ class ProcessVerifiedUser implements ShouldQueue
         // Pull the plain password cached at registration (one-time read + delete)
         $plainPassword = Cache::pull("user.plain_password.{$this->user->id}");
 
-        $this->registerWithKadiApi();
-        $this->insertIntoKadiDatabase($plainPassword);
+        $customerId = $this->registerWithKadiApi();
+        $this->insertIntoKadiDatabase($plainPassword, $customerId);
         $this->sendWelcomeEmail($plainPassword);
     }
 
     /**
-     * POST to KadiApi /customers and store the returned customer_id as linked_id.
+     * POST to KadiApi /customers, store the returned customer_id as linked_id, and return it.
      */
-    private function registerWithKadiApi(): void
+    private function registerWithKadiApi(): ?int
     {
         try {
             $response = KadiApi::createCustomer([
@@ -47,16 +47,20 @@ class ProcessVerifiedUser implements ShouldQueue
 
             if (isset($response['customer_id'])) {
                 $this->user->update(['linked_id' => $response['customer_id']]);
+
+                return $response['customer_id'];
             }
         } catch (RequestException|ConnectionException $e) {
             Log::error('KadiApi registration failed for user '.$this->user->id.': '.$e->getMessage());
         }
+
+        return null;
     }
 
     /**
      * Insert a new account record into the kadi database.
      */
-    private function insertIntoKadiDatabase(?string $plainPassword): void
+    private function insertIntoKadiDatabase(?string $plainPassword, ?int $customerId): void
     {
         try {
             DB::connection('kadi')->table('accounts')->insert([
@@ -64,6 +68,7 @@ class ProcessVerifiedUser implements ShouldQueue
                 'phone' => $this->user->phone,
                 'email' => $this->user->email,
                 'password' => $plainPassword,
+                'outh' => $customerId,
             ]);
         } catch (\Throwable $e) {
             Log::error('Kadi DB insert failed for user '.$this->user->id.': '.$e->getMessage());
