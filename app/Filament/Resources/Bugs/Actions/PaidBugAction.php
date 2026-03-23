@@ -42,10 +42,10 @@ class PaidBugAction extends Action
                 DB::transaction(function () use ($record, $data): void {
                     $transaction = Transaction::query()->create($data);
 
-                    $transaction->wallet->increment('balance', $transaction->amount);
-
-                    $transaction->status = TransactionStatus::COMPLETED;
-                    $transaction->saveQuietly();
+//                    $transaction->wallet->increment('balance', $transaction->amount);
+//
+//                    $transaction->status = TransactionStatus::COMPLETED;
+//                    $transaction->saveQuietly();
 
                     $record->update([
                         'status' => BugStatus::PAID,
