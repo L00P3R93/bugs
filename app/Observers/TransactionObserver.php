@@ -47,6 +47,8 @@ class TransactionObserver
 
                 if ($transaction->type === TransactionType::PAYOUT) {
                     $wallet->increment('balance', $transaction->amount);
+                    $transaction->status = TransactionStatus::COMPLETED;
+                    $transaction->saveQuietly();
                 } elseif ($transaction->type === TransactionType::WITHDRAW) {
                     if ($wallet->balance < $transaction->amount) {
                         throw new \Exception('Insufficient balance');
@@ -60,10 +62,8 @@ class TransactionObserver
                         'amount' => $transaction->amount,
                         'balance' => $wallet->balance,
                     ]);
+                    // Transaction stays PENDING until B2C callback confirms the transfer
                 }
-
-                $transaction->status = TransactionStatus::COMPLETED;
-                $transaction->saveQuietly();
             });
         } catch (\Exception $e) {
             $transaction->status = TransactionStatus::FAILED;

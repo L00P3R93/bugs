@@ -18,6 +18,12 @@
                             <a href="{{ route('dashboard') }}" class="rounded px-4 py-1.5 text-sm font-medium text-zinc-300 ring-1 ring-zinc-700 transition hover:bg-zinc-800 hover:text-white">
                                 Dashboard
                             </a>
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <flux:button variant="ghost" type="submit" class="rounded px-4 py-1.5 text-sm font-medium text-zinc-400 transition hover:text-white" data-test="logout-button">
+                                    {{ __('Log out') }}
+                                </flux:button>
+                            </form>
                         @else
                             <a href="{{ route('login') }}" class="rounded px-4 py-1.5 text-sm font-medium text-zinc-400 transition hover:text-white">
                                 Log in

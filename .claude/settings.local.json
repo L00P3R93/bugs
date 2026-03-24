@@ -37,7 +37,13 @@
       "Bash(xargs grep:*)",
       "Bash(find /c/Users/EMILY/Documents/sites/bugs/resources -type d -name *auth* -o -name *email*)",
       "Bash(vendor/bin/pint --dirty app/Observers/TransactionObserver.php)",
-      "Bash(./vendor/bin/pint --dirty app/Observers/TransactionObserver.php)"
+      "Bash(./vendor/bin/pint --dirty app/Observers/TransactionObserver.php)",
+      "Read(//usr/**)",
+      "Read(//usr/local/**)",
+      "Bash(command -v php)",
+      "Bash(/c/Users/EMILY/.config/herd/bin/php84 artisan:*)",
+      "Bash(\"/c/Users/EMILY/.config/herd/bin/php84/php.exe\" artisan:*)",
+      "Bash(\"/c/Users/EMILY/.config/herd/bin/php84/php.exe\" vendor/bin/pint --dirty)"
     ]
   }
 }

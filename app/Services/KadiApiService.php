@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class KadiApiService
@@ -60,6 +61,24 @@ class KadiApiService
             : $this->http->put($endpoint, $data);
 
         return $response->throw()->json('data') ?? [];
+    }
+
+    /**
+     * Get player statistics for a given date, cached for 1 hour.
+     *
+     * @throws RequestException|ConnectionException
+     */
+    public function getPlayerStats(int $linkedId, string $date): array
+    {
+        $cacheKey = "kadiapi_stats_{$linkedId}_{$date}";
+
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($linkedId, $date) {
+            return $this->post('stats/customers/played', [
+                'customer_id' => $linkedId,
+                'start_date' => $date.' 00:00:00',
+                'end_date' => $date.' 23:59:59',
+            ]);
+        });
     }
 
     /**

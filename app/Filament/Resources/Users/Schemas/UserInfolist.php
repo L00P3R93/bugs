@@ -2,15 +2,19 @@
 
 namespace App\Filament\Resources\Users\Schemas;
 
+use App\Facades\KadiApi;
 use App\Models\User;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 
 class UserInfolist
 {
@@ -71,6 +75,53 @@ class UserInfolist
                                 ->iconColor('gray')
                                 ->placeholder('—'),
                         ])->columns(3)->columnSpanFull(),
+
+                    Section::make('Kadi Play Statistics')
+                        ->icon('hugeicons-game-controller-03')
+                        ->schema(function (User $record) {
+                            if (! $record->isLinked()) {
+                                return [
+                                    ViewEntry::make('kadi_unlinked')
+                                        ->hiddenLabel()
+                                        ->view('filament.infolists.entries.kadi-unlinked')
+                                        ->columnSpanFull(),
+                                ];
+                            }
+
+                            try {
+                                $stats = KadiApi::getPlayerStats($record->linked_id, today()->toDateString());
+
+                                return [
+                                    TextEntry::make('kadi_total')
+                                        ->label('Total')
+                                        ->icon('hugeicons-chart-bar-line')
+                                        ->iconColor('primary')
+                                        ->state($stats['total'] ?? 0),
+                                    TextEntry::make('kadi_games')
+                                        ->label('Games')
+                                        ->icon('hugeicons-game-controller-03')
+                                        ->iconColor('info')
+                                        ->state($stats['games'] ?? 0),
+                                    TextEntry::make('kadi_tournament')
+                                        ->label('Tournament')
+                                        ->icon('hugeicons-trophy')
+                                        ->iconColor('warning')
+                                        ->state($stats['tournament'] ?? 0),
+                                    TextEntry::make('kadi_jackpots')
+                                        ->label('Jackpots')
+                                        ->icon('hugeicons-star')
+                                        ->iconColor('success')
+                                        ->state($stats['jackpots'] ?? 0),
+                                ];
+                            } catch (RequestException|ConnectionException $e) {
+                                return [
+                                    ViewEntry::make('kadi_error')
+                                        ->hiddenLabel()
+                                        ->view('filament.infolists.entries.kadi-error')
+                                        ->columnSpanFull(),
+                                ];
+                            }
+                        })->columns(2)->columnSpanFull(),
 
                 ])->columnSpan(['lg' => 2]),
 
