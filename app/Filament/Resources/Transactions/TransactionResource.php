@@ -74,7 +74,7 @@ class TransactionResource extends Resource
     {
         $query = parent::getEloquentQuery()->withoutGlobalScopes([SoftDeletingScope::class]);
 
-        if (auth()->user()?->isAdmin()) {
+        if (auth()->user()?->isSuperAdmin()) {
             return $query;
         }
 

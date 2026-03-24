@@ -22,7 +22,7 @@ class AdminWalletStatsWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return auth()->user()?->isAdmin() ?? false;
+        return auth()->user()?->isSuperAdmin() ?? false;
     }
 
     protected function getStats(): array
