@@ -43,7 +43,10 @@
       "Bash(command -v php)",
       "Bash(/c/Users/EMILY/.config/herd/bin/php84 artisan:*)",
       "Bash(\"/c/Users/EMILY/.config/herd/bin/php84/php.exe\" artisan:*)",
-      "Bash(\"/c/Users/EMILY/.config/herd/bin/php84/php.exe\" vendor/bin/pint --dirty)"
+      "Bash(\"/c/Users/EMILY/.config/herd/bin/php84/php.exe\" vendor/bin/pint --dirty)",
+      "Bash(vendor/bin/pint --dirty app/Providers/AppServiceProvider.php)",
+      "Bash(\"/c/Users/EMILY/.config/herd/bin/php84/php.exe\" vendor/bin/pint --dirty app/Providers/AppServiceProvider.php)",
+      "Bash(find /c/Users/EMILY/Documents/sites/bugs/app/Http -type f -name *.php)"
     ]
   }
 }
