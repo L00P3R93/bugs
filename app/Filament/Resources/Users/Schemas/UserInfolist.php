@@ -94,7 +94,7 @@ class UserInfolist
                                 return [
                                     TextEntry::make('kadi_total')
                                         ->label('Total')
-                                        ->icon('hugeicons-chart-bar-line')
+                                        ->icon('hugeicons-chart-02')
                                         ->iconColor('primary')
                                         ->state($stats['total'] ?? 0),
                                     TextEntry::make('kadi_games')
@@ -104,12 +104,12 @@ class UserInfolist
                                         ->state($stats['games'] ?? 0),
                                     TextEntry::make('kadi_tournament')
                                         ->label('Tournament')
-                                        ->icon('hugeicons-trophy')
+                                        ->icon('heroicon-o-trophy')
                                         ->iconColor('warning')
                                         ->state($stats['tournament'] ?? 0),
                                     TextEntry::make('kadi_jackpots')
                                         ->label('Jackpots')
-                                        ->icon('hugeicons-star')
+                                        ->icon('hugeicons-stack-star')
                                         ->iconColor('success')
                                         ->state($stats['jackpots'] ?? 0),
                                 ];
