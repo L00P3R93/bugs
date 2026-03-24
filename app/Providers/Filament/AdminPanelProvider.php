@@ -56,6 +56,7 @@ class AdminPanelProvider extends PanelProvider
                 'yellow' => Color::Yellow,
                 'red' => Color::Red,
                 'green' => Color::Green,
+                'indigo' => Color::Indigo,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')

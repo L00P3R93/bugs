@@ -9,6 +9,7 @@ use App\Filament\Resources\Transactions\Pages\ViewTransaction;
 use App\Filament\Resources\Transactions\Schemas\TransactionForm;
 use App\Filament\Resources\Transactions\Schemas\TransactionInfolist;
 use App\Filament\Resources\Transactions\Tables\TransactionsTable;
+use App\Filament\Resources\Transactions\Widgets\TransactionStats;
 use App\Models\Transaction;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -49,6 +50,13 @@ class TransactionResource extends Resource
     {
         return [
             //
+        ];
+    }
+
+    public static function getWidgets(): array
+    {
+        return [
+            TransactionStats::class,
         ];
     }
 

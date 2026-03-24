@@ -31,11 +31,11 @@ class ListBugs extends ListRecords
     {
         return [
             null => Tab::make('All'),
-            'submitted' => Tab::make('Submitted')->query(fn ($query) => $query->status(BugStatus::SUBMITTED)),
-            'under_review' => Tab::make('Under Review')->query(fn ($query) => $query->status(BugStatus::UNDER_REVIEW)),
-            'fixed' => Tab::make('Fixed')->query(fn ($query) => $query->status(BugStatus::FIXED)),
-            'paid' => Tab::make('Paid')->query(fn ($query) => $query->status(BugStatus::PAID)),
-            'closed' => Tab::make('Closed')->query(fn ($query) => $query->status(BugStatus::CLOSED)),
+            'submitted' => Tab::make('Submitted')->query(fn ($query) => $query->where('status', BugStatus::SUBMITTED)),
+            'under_review' => Tab::make('Under Review')->query(fn ($query) => $query->where('status', BugStatus::UNDER_REVIEW)),
+            'fixed' => Tab::make('Fixed')->query(fn ($query) => $query->where('status', BugStatus::FIXED)),
+            'paid' => Tab::make('Paid')->query(fn ($query) => $query->where('status', BugStatus::PAID)),
+            'closed' => Tab::make('Closed')->query(fn ($query) => $query->where('status', BugStatus::CLOSED)),
         ];
     }
 }

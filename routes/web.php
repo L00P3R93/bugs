@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\WithdrawResultController;
+use App\Http\Controllers\WithdrawTimeoutController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
@@ -12,5 +14,8 @@ Route::middleware(['auth'])->get('/dashboard', function () {
 
     return redirect('/admin');
 })->name('dashboard');
+
+Route::post('/result', WithdrawResultController::class);
+Route::post('/timeout', WithdrawTimeoutController::class);
 
 require __DIR__.'/settings.php';
