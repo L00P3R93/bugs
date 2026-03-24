@@ -36,7 +36,7 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $input['password'],
         ]);
 
-        $user->assignRole('Tester');
+        $user->assignRole('Player');
 
         Cache::put("user.plain_password.{$user->id}", $input['password'], now()->addHours(48));
 
