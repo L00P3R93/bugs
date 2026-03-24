@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Users\Schemas;
 
+use App\Enums\BugStatus;
 use App\Facades\KadiApi;
 use App\Models\User;
 use Filament\Infolists\Components\IconEntry;
@@ -122,7 +123,6 @@ class UserInfolist
                                 ];
                             }
                         })->columns(2)->columnSpanFull(),
-
                 ])->columnSpan(['lg' => 2]),
 
                 Group::make()->schema([
@@ -132,64 +132,43 @@ class UserInfolist
                         ->schema([
                             TextEntry::make('status')
                                 ->label('Status')
-                                ->badge()
-                                ->columnSpanFull(),
-                            IconEntry::make('email_verified_at')
-                                ->label('Email Verified')
-                                ->state(fn (User $record) => $record->hasVerifiedEmail())
-                                ->boolean()
-                                ->trueIcon(Heroicon::OutlinedCheckBadge)
-                                ->falseIcon(Heroicon::OutlinedXCircle)
-                                ->trueColor('success')
-                                ->falseColor('danger'),
-                            IconEntry::make('two_factor_confirmed_at')
-                                ->label('2FA Enabled')
-                                ->state(fn (User $record) => ! empty($record->two_factor_confirmed_at))
-                                ->boolean()
-                                ->trueIcon(Heroicon::OutlinedShieldCheck)
-                                ->falseIcon(Heroicon::OutlinedShieldExclamation)
-                                ->trueColor('success')
-                                ->falseColor('gray'),
+                                ->badge(),
                             TextEntry::make('roles')
                                 ->label('Roles')
                                 ->state(fn (User $record) => $record->roles->pluck('name'))
                                 ->badge()
                                 ->color('primary')
-                                ->separator(',')
-                                ->columnSpanFull(),
+                                ->separator(','),
                             TextEntry::make('bugs_count')
                                 ->label('Bugs Submitted')
                                 ->icon('hugeicons-bug-02')
-                                ->iconColor('warning')
+                                ->iconColor('info')
                                 ->state(fn (User $record) => $record->bugs()->count())
-                                ->suffix(fn (User $record) => $record->bugs()->count() === 1 ? ' bug' : ' bugs')
-                                ->columnSpanFull(),
+                                ->suffix(fn (User $record) => $record->bugs()->count() === 1 ? ' bug' : ' bugs'),
+                            TextEntry::make('bugs_fixed_count')
+                                ->label('Bugs Fixed')
+                                ->icon('hugeicons-bug-02')
+                                ->iconColor('teal')
+                                ->state(fn (User $record) => $record->bugs()->whereIn('status', [BugStatus::FIXED, BugStatus::CLOSED])->count())
+                                ->suffix(fn (User $record) => $record->bugs()->whereIn('status', [BugStatus::FIXED, BugStatus::CLOSED])->count() === 1 ? ' bug' : ' bugs'),
                         ])->columns(2),
 
                     Section::make('Wallet')
                         ->icon('hugeicons-wallet-add-02')
                         ->schema([
-                            TextEntry::make('wallet.wallet_no')
-                                ->label('Wallet Number')
-                                ->icon('hugeicons-left-to-right-list-number')
-                                ->iconColor('primary')
-                                ->copyable()
-                                ->copyMessage('Wallet number copied!')
-                                ->placeholder('No wallet assigned.'),
-                            TextEntry::make('wallet.status')
-                                ->label('Wallet Status')
-                                ->badge()
-                                ->placeholder('—'),
                             TextEntry::make('wallet.balance')
                                 ->label('Balance')
                                 ->icon('hugeicons-money-send-01')
                                 ->iconColor('success')
-                                ->prefix('Ksh. ')
+                                ->prefix('KES. ')
                                 ->numeric(decimalPlaces: 2)
                                 ->weight(FontWeight::Bold)
                                 ->color('success')
-                                ->placeholder('0.00')
-                                ->columnSpanFull(),
+                                ->placeholder('0.00'),
+                            TextEntry::make('wallet.status')
+                                ->label('Wallet Status')
+                                ->badge()
+                                ->placeholder('—'),
                         ])->columns(2),
 
                     Section::make('Timeline')
@@ -205,7 +184,7 @@ class UserInfolist
                                 ->icon('hugeicons-system-update-01')
                                 ->iconColor('gray')
                                 ->dateTime('d M Y, H:i'),
-                        ])->columns(1),
+                        ])->columns(1)->collapsed(),
 
                 ])->columnSpan(['lg' => 1]),
             ])

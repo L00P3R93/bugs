@@ -6,6 +6,7 @@ use App\Enums\BugStatus;
 use App\Models\Bug;
 use App\Models\Category;
 use App\Models\Severity;
+use Filament\Forms\Components\MarkdownEditor;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -16,6 +17,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Facades\Request;
 
 class BugForm
 {
@@ -38,7 +40,7 @@ class BugForm
                         ->prefixIcon('hugeicons-file-bitcoin')
                         ->prefixIconColor('primary')
                         ->required(),
-                    RichEditor::make('description')
+                    MarkdownEditor::make('description')
                         ->required()
                         ->columnSpanFull(),
                 ])->columns(2)->columnSpanFull(),
@@ -55,13 +57,14 @@ class BugForm
                         ->columnSpanFull(),
                 ])->columnSpanFull(),
                 Section::make('Bug Reports')->schema([
-                    RichEditor::make('environment')
+                    MarkdownEditor::make('environment')
+                        ->default(fn () => Request::userAgent())
                         ->columnSpanFull(),
-                    RichEditor::make('steps_to_reproduce')
+                    MarkdownEditor::make('steps_to_reproduce')
                         ->columnSpanFull(),
-                    RichEditor::make('expected_result')
+                    MarkdownEditor::make('expected_result')
                         ->columnSpanFull(),
-                    RichEditor::make('actual_result')
+                    MarkdownEditor::make('actual_result')
                         ->columnSpanFull(),
                 ])->columnSpanFull()->collapsed(),
             ])->columnSpan(['lg' => 2]),

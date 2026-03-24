@@ -34,13 +34,14 @@ class BugInfolist
                                 ->label('Bug Title')
                                 ->icon('hugeicons-file-edit')
                                 ->iconColor('primary')
-                                ->weight(FontWeight::SemiBold)
-                                ->columnSpanFull(),
+                                ->weight(FontWeight::SemiBold),
                             TextEntry::make('description')
+                                ->icon('hugeicons-file-script')
+                                ->iconColor('primary')
                                 ->label('Description')
                                 ->html()
                                 ->columnSpanFull(),
-                        ])->columns(2)->columnSpanFull(),
+                        ])->columns(3)->columnSpanFull(),
 
                     Section::make('Technical Report')
                         ->icon('hugeicons-file-script')
@@ -49,7 +50,7 @@ class BugInfolist
                             TextEntry::make('environment')
                                 ->label('Environment')
                                 ->icon('hugeicons-computer')
-                                ->iconColor('gray')
+                                ->iconColor('info')
                                 ->html()
                                 ->placeholder('Not provided.')
                                 ->columnSpanFull(),
@@ -83,10 +84,6 @@ class BugInfolist
                     Section::make('Classification')
                         ->icon('hugeicons-sorting-01')
                         ->schema([
-                            TextEntry::make('status')
-                                ->label('Status')
-                                ->badge()
-                                ->columnSpanFull(),
                             TextEntry::make('category.name')
                                 ->label('Category')
                                 ->icon('hugeicons-file-script')
@@ -110,7 +107,11 @@ class BugInfolist
                                         : null;
                                 })
                                 ->openUrlInNewTab(),
-                        ])->columns(1),
+                            TextEntry::make('status')
+                                ->label('Status')
+                                ->badge()
+                                ->columnSpanFull(),
+                        ])->columns(2),
 
                     Section::make('Scoring')
                         ->icon('hugeicons-wallet-add-02')
@@ -135,7 +136,7 @@ class BugInfolist
                                 ->trueIcon('hugeicons-checkmark-circle-02')
                                 ->falseIcon('hugeicons-cancel-circle')
                                 ->trueColor('success')
-                                ->falseColor('gray'),
+                                ->falseColor('danger'),
                             TextEntry::make('paid_at')
                                 ->label('Awarded At')
                                 ->icon('hugeicons-calendar-upload-01')
@@ -163,7 +164,7 @@ class BugInfolist
                                 ->iconColor('danger')
                                 ->dateTime('d M Y, H:i')
                                 ->visible(fn (Bug $record): bool => $record->trashed()),
-                        ])->columns(1),
+                        ])->columns(1)->collapsed(),
 
                 ])->columnSpan(['lg' => 1]),
 
