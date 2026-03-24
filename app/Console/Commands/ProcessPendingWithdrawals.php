@@ -24,7 +24,7 @@ class ProcessPendingWithdrawals extends Command
             /** @var Withdraw|null $withdraw */
             $withdraw = Withdraw::query()
                 ->where('status', TransactionStatus::PENDING)
-                ->where('amount', '>=', 50)
+                ->where('amount', '>=', 10)
                 ->whereNotNull('phone')
                 ->whereNotNull('wallet_id')
                 ->whereNotNull('transaction_id')
