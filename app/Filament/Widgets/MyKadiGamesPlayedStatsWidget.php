@@ -17,7 +17,7 @@ class MyKadiGamesPlayedStatsWidget extends BaseWidget
 
     protected static ?int $sort = 3;
 
-    protected ?string $heading = 'Games Played';
+    protected ?string $heading = 'Games Played Today';
 
     public static function canView(): bool
     {

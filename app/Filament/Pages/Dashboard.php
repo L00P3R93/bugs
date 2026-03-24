@@ -22,6 +22,7 @@ class Dashboard extends BaseDashboard
                     'this_week' => 'This Week',
                     'this_month' => 'This Month',
                 ])
+                ->visible(fn () => auth()->user()?->isSuperAdmin())
                 ->default('all_time')
                 ->selectablePlaceholder(false),
         ]);

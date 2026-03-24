@@ -31,10 +31,10 @@ class ListUsers extends ListRecords
     {
         return [
             null => Tab::make('All'),
-            'active' => Tab::make('Active')->query(fn ($query) => $query->status(UserStatus::Active)),
-            'inactive' => Tab::make('Inactive')->query(fn ($query) => $query->status(UserStatus::Inactive)),
-            'suspended' => Tab::make('Suspended')->query(fn ($query) => $query->status(UserStatus::Suspended)),
-            'banned' => Tab::make('Banned')->query(fn ($query) => $query->status(UserStatus::Banned)),
+            'Super Admin' => Tab::make('Super Admins')->query(fn ($query) => $query->role('Super Admin')),
+            'Admin' => Tab::make('Admins')->query(fn ($query) => $query->role('Admin')),
+            'Tester' => Tab::make('Testers')->query(fn ($query) => $query->role('Tester')),
+            'Player' => Tab::make('Players')->query(fn ($query) => $query->role('Player')),
         ];
     }
 }
