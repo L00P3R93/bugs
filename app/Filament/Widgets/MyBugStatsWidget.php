@@ -25,7 +25,7 @@ class MyBugStatsWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return auth()->user()?->hasAnyRole(['Tester', 'Player']) ?? false;
+        return auth()->user()?->hasAnyRole(['Tester']) ?? false;
     }
 
     protected function applyPeriodFilter(Builder $query, string $column = 'created_at'): Builder
