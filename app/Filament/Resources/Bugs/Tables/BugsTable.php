@@ -13,6 +13,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Kirschbaum\Commentions\Filament\Actions\SubscriptionAction;
 
 class BugsTable
 {
@@ -76,6 +77,7 @@ class BugsTable
             ->recordActions([
                 ViewAction::make()->iconButton()->icon('hugeicons-file-view')->color('primary')->tooltip('View Bug Details'),
                 EditAction::make()->iconButton()->icon('hugeicons-note-edit')->color('info')->tooltip('Edit Bug'),
+                SubscriptionAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

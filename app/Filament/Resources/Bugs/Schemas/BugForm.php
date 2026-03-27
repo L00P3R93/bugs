@@ -6,11 +6,15 @@ use App\Enums\BugStatus;
 use App\Models\Bug;
 use App\Models\Category;
 use App\Models\Severity;
+use App\Services\GeminiService;
+use Filament\Actions\Action;
 use Filament\Forms\Components\MarkdownEditor;
-use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
@@ -41,9 +45,179 @@ class BugForm
                         ->prefixIconColor('primary')
                         ->required(),
                     MarkdownEditor::make('description')
+                        ->placeholder('Describe the bug in your own words first. What happened? What did you expect? Steps to reproduce?')
+                        ->helperText('Write your own description first — the more detail you add, the better AI can help refine it.')
+                        ->hintIcon('heroicon-o-pencil')
                         ->required()
                         ->columnSpanFull(),
                 ])->columns(2)->columnSpanFull(),
+                Section::make()
+                    ->schema([
+                        TextEntry::make('ai_hint')
+                            ->label('')
+                            ->state('✍️ Write your description above first, then use AI to improve it. You have 2 AI requests on this bug report.'),
+                        Actions::make([
+                            Action::make('improve_description')
+                                ->label('Improve My Description')
+                                ->icon('heroicon-o-sparkles')
+                                ->color('primary')
+                                ->tooltip('AI will refine and improve what you have already written')
+                                ->disabled(fn (?Bug $record) => $record
+                                    ? $record->ai_uses >= 2
+                                    : session()->get('bug_ai_uses_'.session()->getId(), 0) >= 2
+                                )
+                                ->requiresConfirmation()
+                                ->modalHeading('Improve with AI?')
+                                ->modalDescription('AI will refine your current description. Your original text will be replaced. This uses 1 of your 2 AI requests.')
+                                ->modalSubmitActionLabel('Yes, improve it')
+                                ->action(function (Get $get, Set $set, ?Bug $record): void {
+                                    $description = $get('description');
+                                    $sessionKey = 'bug_ai_uses_'.session()->getId();
+                                    $uses = $record ? $record->ai_uses : session()->get($sessionKey, 0);
+
+                                    if (blank($description)) {
+                                        Notification::make()
+                                            ->title('Nothing to Improve')
+                                            ->body('Write something in the description field first, then ask AI to improve it.')
+                                            ->warning()
+                                            ->send();
+
+                                        return;
+                                    }
+
+                                    if ($uses >= 2) {
+                                        Notification::make()
+                                            ->title('AI Limit Reached')
+                                            ->body('You have used both AI requests for this bug report. Edit the description manually.')
+                                            ->danger()
+                                            ->send();
+
+                                        return;
+                                    }
+
+                                    try {
+                                        $prompt = sprintf(
+                                            'Rewrite this bug description using exactly 500 characters in plain text only. Output a single improved description with no headings, no options, no markdown, no explanations. Keep the original meaning. Do not invent details. Title: %s. Description: %s',
+                                            $get('title'),
+                                            $description,
+                                        );
+
+                                        $improved = app(GeminiService::class)->improveOrGenerate($prompt);
+
+                                        $set('description', $improved);
+
+                                        if ($record) {
+                                            $record->increment('ai_uses');
+                                            $record->update(['ai_last_used_at' => now()]);
+                                        } else {
+                                            session()->put($sessionKey, $uses + 1);
+                                        }
+
+                                        Notification::make()
+                                            ->title('Description Improved')
+                                            ->body('AI has refined your description.')
+                                            ->success()
+                                            ->send();
+                                    } catch (\RuntimeException $e) {
+                                        Notification::make()
+                                            ->title('AI Error')
+                                            ->body($e->getMessage())
+                                            ->danger()
+                                            ->send();
+                                    }
+                                }),
+
+                            Action::make('generate_from_title')
+                                ->label('Generate from Title')
+                                ->icon('heroicon-o-bolt')
+                                ->color('gray')
+                                ->tooltip('Only use this if you have nothing written yet')
+                                ->disabled(fn (?Bug $record) => $record
+                                    ? $record->ai_uses >= 2
+                                    : session()->get('bug_ai_uses_'.session()->getId(), 0) >= 2
+                                )
+                                ->requiresConfirmation()
+                                ->modalHeading('Generate from Title?')
+                                ->modalDescription('This will create a draft description from your title only. Best used when the description field is empty. Uses 1 of your 2 AI requests.')
+                                ->modalSubmitActionLabel('Generate draft')
+                                ->action(function (Get $get, Set $set, ?Bug $record): void {
+                                    $title = $get('title');
+                                    $description = $get('description');
+                                    $sessionKey = 'bug_ai_uses_'.session()->getId();
+                                    $uses = $record ? $record->ai_uses : session()->get($sessionKey, 0);
+
+                                    if (blank($title)) {
+                                        Notification::make()
+                                            ->title('Title Required')
+                                            ->body('Add a bug title first so AI has context to work with.')
+                                            ->warning()
+                                            ->send();
+
+                                        return;
+                                    }
+
+                                    if ($uses >= 2) {
+                                        Notification::make()
+                                            ->title('AI Limit Reached')
+                                            ->body('You have used both AI requests for this bug report. Edit the description manually.')
+                                            ->danger()
+                                            ->send();
+
+                                        return;
+                                    }
+
+                                    if (filled($description)) {
+                                        Notification::make()
+                                            ->title('You Already Have a Description')
+                                            ->body('Use "Improve My Description" instead to refine what you have written.')
+                                            ->warning()
+                                            ->send();
+
+                                        return;
+                                    }
+
+                                    try {
+                                        $prompt = sprintf(
+                                            'Write a single plain-text bug description using exactly 500 characters based only on this title: %s. No headings, no options, no markdown, no explanations.',
+                                            $title,
+                                        );
+
+                                        $generated = app(GeminiService::class)->improveOrGenerate($prompt);
+
+                                        $set('description', $generated);
+
+                                        if ($record) {
+                                            $record->increment('ai_uses');
+                                            $record->update(['ai_last_used_at' => now()]);
+                                        } else {
+                                            session()->put($sessionKey, $uses + 1);
+                                        }
+
+                                        Notification::make()
+                                            ->title('Draft Generated')
+                                            ->body('Fill in the placeholder sections marked in [brackets].')
+                                            ->warning()
+                                            ->send();
+                                    } catch (\RuntimeException $e) {
+                                        Notification::make()
+                                            ->title('AI Error')
+                                            ->body($e->getMessage())
+                                            ->danger()
+                                            ->send();
+                                    }
+                                }),
+                        ])->columnSpanFull(),
+
+                        TextEntry::make('ai_uses_display')
+                            ->label('AI Requests Used')
+                            ->state(fn (?Bug $record) => $record
+                                ? ($record->ai_uses.' / 2 used'.($record->hasAiUsesRemaining() ? '' : ' — limit reached'))
+                                : 'Creating new report — 2 requests available'
+                            )
+                            ->columnSpanFull(),
+                    ])
+                    ->columnSpanFull()
+                    ->compact(),
                 Section::make('Upload Attachment')->schema([
                     SpatieMediaLibraryFileUpload::make('bug_attachment')
                         ->multiple()

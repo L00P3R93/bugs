@@ -6,6 +6,7 @@ use App\Enums\UserStatus;
 use App\Traits\Auditable;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasAvatar;
 use Filament\Panel;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,13 +16,14 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
+use Kirschbaum\Commentions\Contracts\Commenter;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable implements FilamentUser, HasMedia, MustVerifyEmail
+class User extends Authenticatable implements Commenter, FilamentUser, HasAvatar, HasMedia, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use Auditable, HasFactory, HasRoles, InteractsWithMedia, Notifiable, TwoFactorAuthenticatable;
@@ -73,6 +75,19 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
             ->take(2)
             ->map(fn ($word) => Str::substr($word, 0, 1))
             ->implode('');
+    }
+
+    public function getFilamentAvatarUrl(): ?string
+    {
+        $uploaded = $this->getFirstMediaUrl('avatars', 'thumb');
+
+        if ($uploaded) {
+            return $uploaded;
+        }
+
+        $hash = md5(strtolower(trim($this->email ?? '')));
+
+        return "https://www.gravatar.com/avatar/{$hash}?d=mp&s=150";
     }
 
     public function canAccessPanel(Panel $panel): bool

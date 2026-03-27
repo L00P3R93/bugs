@@ -13,6 +13,7 @@
         "filament/filament": "~5.0",
         "filament/spatie-laravel-media-library-plugin": "~5.0",
         "flowframe/laravel-trend": "^0.4.0",
+        "kirschbaum-development/commentions": "^0.7.10",
         "laravel/fortify": "^1.30",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",

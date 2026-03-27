@@ -4,12 +4,15 @@ namespace App\Filament\Resources\Bugs\Schemas;
 
 use App\Filament\Resources\Bugs\BugResource;
 use App\Models\Bug;
+use App\Models\User;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
+use Illuminate\Database\Eloquent\Model;
+use Kirschbaum\Commentions\Filament\Infolists\Components\CommentsEntry;
 
 class BugInfolist
 {
@@ -168,6 +171,19 @@ class BugInfolist
 
                 ])->columnSpan(['lg' => 1]),
 
+                Section::make('Comments')
+                    ->icon('hugeicons-comment-02')
+                    ->description('A chronological record of all comments made on this bug.')
+                    ->schema([
+                        CommentsEntry::make('comments')
+                            ->mentionables(fn (Model $record) => User::all())
+                            ->poll('10s')
+                            ->perPage(8)
+                            ->loadMoreIncrementsBy(8)
+                            ->loadMoreLabel('Load more comments'),
+                    ])
+                    ->columnSpanFull(),
+
                 Section::make('Activity Log')
                     ->icon('hugeicons-task-01')
                     ->description('A chronological record of all actions taken on this bug.')
@@ -190,7 +206,7 @@ class BugInfolist
                                     ->implode('');
                             })
                             ->columnSpanFull(),
-                    ])->columnSpanFull(),
+                    ])->columnSpanFull()->collapsed(),
             ])
             ->columns(3);
     }

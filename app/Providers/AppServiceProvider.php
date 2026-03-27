@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Listeners\HandleEmailVerified;
+use App\Listeners\SendSubscriptionNotification;
 use App\Models\Bug;
 use App\Models\Transaction;
 use App\Models\User;
@@ -11,6 +12,7 @@ use App\Observers\BugObserver;
 use App\Observers\TransactionObserver;
 use App\Observers\UserObserver;
 use App\Observers\WalletObserver;
+use App\Services\GeminiService;
 use App\Services\KadiApiService;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Events\Verified;
@@ -22,6 +24,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Kirschbaum\Commentions\Events\UserIsSubscribedToCommentableEvent;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -32,6 +35,10 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(KadiApiService::class, function ($app) {
             return new KadiApiService;
+        });
+
+        $this->app->singleton(GeminiService::class, function ($app) {
+            return new GeminiService;
         });
     }
 
@@ -86,6 +93,7 @@ class AppServiceProvider extends ServiceProvider
     protected function configureEvents(): void
     {
         Event::listen(Verified::class, HandleEmailVerified::class);
+        Event::listen(UserIsSubscribedToCommentableEvent::class, SendSubscriptionNotification::class);
     }
 
     protected function configureGates(): void

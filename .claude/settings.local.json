@@ -46,7 +46,15 @@
       "Bash(\"/c/Users/EMILY/.config/herd/bin/php84/php.exe\" vendor/bin/pint --dirty)",
       "Bash(vendor/bin/pint --dirty app/Providers/AppServiceProvider.php)",
       "Bash(\"/c/Users/EMILY/.config/herd/bin/php84/php.exe\" vendor/bin/pint --dirty app/Providers/AppServiceProvider.php)",
-      "Bash(find /c/Users/EMILY/Documents/sites/bugs/app/Http -type f -name *.php)"
+      "Bash(find /c/Users/EMILY/Documents/sites/bugs/app/Http -type f -name *.php)",
+      "Bash(/c/Users/EMILY/AppData/Local/Programs/herd-lite/bin/php vendor/bin/pint --dirty)",
+      "Bash(\"C:\\\\Users\\\\EMILY\\\\.config\\\\herd\\\\bin\\\\php.bat\" vendor/bin/pint --dirty)",
+      "Bash(\"C:\\\\Users\\\\EMILY\\\\.config\\\\herd\\\\bin\\\\php.bat\" artisan:*)",
+      "Bash(find C:UsersEMILYDocumentssitesbugsvendorfilament -type f -name Action.php -path */Schemas/*)",
+      "Bash(grep -r FilamentActionsAction C:UsersEMILYDocumentssitesbugsapp --include=*.php -l)",
+      "Bash(grep -r Actions::make C:UsersEMILYDocumentssitesbugsvendorfilamentschemassrc --include=*.php -l)",
+      "Bash(grep -r 'Get $get' C:UsersEMILYDocumentssitesbugsvendorfilamentactionssrc --include=*.php -l)",
+      "Bash(grep -r \"Get $get\\\\|Set $set\" \"C:\\\\Users\\\\EMILY\\\\Documents\\\\sites\\\\bugs\\\\vendor\\\\filament\\\\actions\\\\src\" --include=\"*.php\")"
     ]
   }
 }

@@ -4,20 +4,26 @@ namespace App\Models;
 
 use App\Enums\BugStatus;
 use App\Traits\Auditable;
+use Carbon\Carbon;
 use Database\Factories\BugFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
+use Kirschbaum\Commentions\Contracts\Commentable;
+use Kirschbaum\Commentions\HasComments;
+use Kirschbaum\Commentions\RenderableComment;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Bug extends Model implements HasMedia
+class Bug extends Model implements Commentable, HasMedia
 {
     /** @use HasFactory<BugFactory> */
-    use Auditable, HasFactory, InteractsWithMedia, SoftDeletes;
+    use Auditable, HasComments, HasFactory, InteractsWithMedia, SoftDeletes;
 
     protected $table = 'bugs';
 
@@ -26,10 +32,16 @@ class Bug extends Model implements HasMedia
         return [
             'status' => BugStatus::class,
             'paid_at' => 'datetime',
+            'ai_last_used_at' => 'datetime',
             'base_amount' => 'decimal:2',
             'final_amount' => 'decimal:2',
             'is_paid' => 'boolean',
         ];
+    }
+
+    public function hasAiUsesRemaining(): bool
+    {
+        return $this->ai_uses < 2;
     }
 
     public function reporter(): BelongsTo
@@ -75,6 +87,11 @@ class Bug extends Model implements HasMedia
         return $this->hasMany(Transaction::class);
     }
 
+    public function auditLogs(): MorphMany
+    {
+        return $this->morphMany(AuditLog::class, 'auditable');
+    }
+
     public function getBaseAmount(): float
     {
         $category = $this->category;
@@ -97,5 +114,37 @@ class Bug extends Model implements HasMedia
             ->acceptsFile(fn ($file) => in_array($file->mimeType, [
                 'image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'video/mp4', 'video/mov', 'video/avi', 'video/wmv',
             ]));
+    }
+
+    public function getComments(?int $limit = null): Collection
+    {
+        $statusHistory = $this->auditLogs()
+            ->where('event', 'updated')
+            ->whereNotNull('new_values->status')
+            ->with('user')
+            ->get()
+            ->map(function (AuditLog $log) {
+                $oldStatus = BugStatus::tryFrom($log->old_values['status'] ?? '')?->getLabel() ?? ($log->old_values['status'] ?? 'Unknown');
+                $newStatus = BugStatus::tryFrom($log->new_values['status'] ?? '')?->getLabel() ?? ($log->new_values['status'] ?? 'Unknown');
+
+                return new RenderableComment(
+                    id: $log->id,
+                    authorName: $log->user?->name ?? 'System',
+                    body: sprintf('Status changed from <strong>%s</strong> to <strong>%s</strong>', $oldStatus, $newStatus),
+                    createdAt: Carbon::parse($log->created_at),
+                );
+            });
+
+        $comments = $this->comments()->latest()->with('author')->get();
+
+        $mergedCollection = $statusHistory->merge($comments)
+            ->sortByDesc(fn ($item) => $item->getCreatedAt())
+            ->values();
+
+        if ($limit) {
+            return $mergedCollection->take($limit);
+        }
+
+        return $mergedCollection;
     }
 }
