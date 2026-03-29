@@ -69,6 +69,7 @@ class ProcessVerifiedUser implements ShouldQueue
                 'email' => $this->user->email,
                 'password' => $plainPassword,
                 'outh' => $customerId,
+                'google_id' => $this->user->account_no,
             ]);
         } catch (\Throwable $e) {
             Log::error('Kadi DB insert failed for user '.$this->user->id.': '.$e->getMessage());

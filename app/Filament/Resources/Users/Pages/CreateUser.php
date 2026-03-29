@@ -4,7 +4,7 @@ namespace App\Filament\Resources\Users\Pages;
 
 use App\Filament\Resources\Users\UserResource;
 use App\Models\User;
-use App\Services\EmailVerificationService;
+// use App\Services\EmailVerificationService;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -18,11 +18,11 @@ class CreateUser extends CreateRecord
     protected function afterCreate(): void
     {
         if ($this->plainPassword && $this->record) {
-            $emailVerificationService = app(EmailVerificationService::class);
+            // $emailVerificationService = app(EmailVerificationService::class);
             /** @var User $user */
             $user = $this->record;
-            $emailVerificationService->sendWelcomeEmail($user, $this->plainPassword);
-            $emailVerificationService->sendVerificationEmail($user);
+            // $emailVerificationService->sendWelcomeEmail($user, $this->plainPassword);
+            // $emailVerificationService->sendVerificationEmail($user);
         }
     }
 
