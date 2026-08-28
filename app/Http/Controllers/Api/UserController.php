@@ -25,26 +25,25 @@ class UserController extends Controller
     {
         try {
             $validated = $request->validated();
-            $hashedPassword = $validated['password'];
+            $password = $validated['password'];
             unset($validated['password']);
 
             $user = User::forceCreate($validated);
-            $user->setAttribute('password', $hashedPassword);
-            $user->save();
+            $user->newQueryWithoutScopes()->where('id', $user->id)->update(['password' => $password]);
 
             $user->update(['email_verified_at' => now()]);
             $user->assignRole('Tester');
 
             return response()->json([
-                'message' => 'Customer created successfully',
+                'message' => 'Bugs Account created successfully',
                 'user_id' => $user->id,
             ], 201);
 
         } catch (\Exception $e) {
-            Log::error("API Create User Error: {$e->getMessage()}");
+            Log::error("API Create Bugs account Error: {$e->getMessage()}");
 
             return response()->json([
-                'message' => 'Failed to create customer',
+                'message' => 'Failed to create Bugs Account',
                 'error' => $e->getMessage(),
             ], 500);
         }
