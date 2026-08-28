@@ -21,10 +21,16 @@ class UserController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreUserRequest $request)
+    public function store(Request $request)
     {
         try {
+            // Debugging Only
             Log::info("API Create Bugs account Request: {$request->all()}");
+            return response()->json([
+                'message' => 'Bugs AccountRequest Received',
+                'user_id' => 1,
+            ], 201);
+            /*
             $validated = $request->validated();
             $password = $validated['password'];
             unset($validated['password']);
@@ -46,6 +52,7 @@ class UserController extends Controller
                 'message' => 'Bugs Account created successfully',
                 'user_id' => $user->id,
             ], 201);
+            */
 
         } catch (\Exception $e) {
             Log::error("API Create Bugs account Error: {$e->getMessage()}", ['request' => $request->all()]);
