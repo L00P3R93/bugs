@@ -21,28 +21,29 @@ class UserController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
         try {
-            // Debugging Only
+            /* Debugging Only
             Log::info("API Create Bugs account Request", ['request' => $request->all()]);
             return response()->json([
                 'message' => 'Bugs AccountRequest Received',
                 'user_id' => 1,
             ], 201);
-            /*
+            */
             $validated = $request->validated();
             $password = $validated['password'];
             unset($validated['password']);
-            $phone = (empty($validated['phone']) || $validated['phone'] == '') ? null : $validated['phone'];
-            unset($validated['phone']);
-
+            $phone = $validated['phone'];
+            if (is_null($phone)) {
+                unset($validated['phone']);
+            }
 
             $user = User::forceCreate($validated);
             $user->newQueryWithoutScopes()->where('id', $user->id)
                 ->update([
                     'password' => $password,
-                    'phone' => $phone,
+                    // 'phone' => $phone,
                 ]);
 
             $user->update(['email_verified_at' => now()]);
@@ -52,7 +53,6 @@ class UserController extends Controller
                 'message' => 'Bugs Account created successfully',
                 'user_id' => $user->id,
             ], 201);
-            */
 
         } catch (\Exception $e) {
             Log::error("API Create Bugs account Error: {$e->getMessage()}", ['request' => $request->all()]);
