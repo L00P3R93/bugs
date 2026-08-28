@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Enums\TransactionStatus;
 use App\Enums\TransactionType;
 use App\Models\Transaction;
+use App\Models\TransactionLog;
 use App\Models\Withdraw;
 use Illuminate\Support\Facades\DB;
 
@@ -21,6 +22,21 @@ class TransactionObserver
             } while (Transaction::query()->where('transaction_no', $transactionNo)->exists());
 
             $transaction->transaction_no = $transactionNo;
+        }
+
+        // Set user_id from wallet if not set
+        if (! $transaction->user_id && $transaction->wallet_id) {
+            $transaction->user_id = $transaction->wallet->user_id;
+        }
+
+        // Calculate net amount if not set
+        if (is_null($transaction->net_amount)) {
+            $transaction->net_amount = $transaction->amount - ($transaction->fee_amount ?? 0);
+        }
+
+        // Set default currency
+        if (! $transaction->currency) {
+            $transaction->currency = 'KES';
         }
 
         $transaction->status = TransactionStatus::PENDING;
@@ -41,19 +57,33 @@ class TransactionObserver
      */
     public function created(Transaction $transaction): void
     {
+        // Log creation
+        TransactionLog::create([
+            'transaction_id' => $transaction->id,
+            'action' => 'created',
+            'new_status' => $transaction->status->value,
+            'details' => [
+                'amount' => $transaction->amount,
+                'type' => $transaction->type->value,
+            ],
+            'performed_by' => auth()->id(),
+        ]);
+
         try {
             DB::transaction(function () use ($transaction): void {
                 $wallet = $transaction->wallet()->lockForUpdate()->first();
 
                 if ($transaction->type === TransactionType::PAYOUT) {
-                    $wallet->increment('balance', $transaction->amount);
-                    $transaction->status = TransactionStatus::COMPLETED;
+                    // Hold payout for 7-day pending period
+                    $wallet->holdPayout($transaction->net_amount);
+                    $transaction->status = TransactionStatus::PENDING;
                     $transaction->saveQuietly();
                 } elseif ($transaction->type === TransactionType::WITHDRAW) {
                     if ($wallet->balance < $transaction->amount) {
                         throw new \Exception('Insufficient balance');
                     }
                     $wallet->decrement('balance', $transaction->amount);
+                    $wallet->decrement('available_balance', $transaction->amount);
                     $user = $wallet->user;
                     Withdraw::query()->create([
                         'transaction_id' => $transaction->id,
@@ -67,7 +97,18 @@ class TransactionObserver
             });
         } catch (\Exception $e) {
             $transaction->status = TransactionStatus::FAILED;
+            $transaction->cancelled_at = now();
             $transaction->saveQuietly();
+
+            // Log failure
+            TransactionLog::create([
+                'transaction_id' => $transaction->id,
+                'action' => 'failed',
+                'previous_status' => TransactionStatus::PENDING->value,
+                'new_status' => TransactionStatus::FAILED->value,
+                'details' => ['error' => $e->getMessage()],
+                'performed_by' => auth()->id(),
+            ]);
 
             throw $e;
         }
@@ -78,7 +119,24 @@ class TransactionObserver
      */
     public function updated(Transaction $transaction): void
     {
-        //
+        if ($transaction->wasChanged('status')) {
+            $previousStatus = $transaction->getOriginal('status');
+
+            TransactionLog::create([
+                'transaction_id' => $transaction->id,
+                'action' => 'status_changed',
+                'previous_status' => $previousStatus,
+                'new_status' => $transaction->status->value,
+                'performed_by' => auth()->id(),
+            ]);
+
+            // Handle status-specific logic
+            match ($transaction->status) {
+                TransactionStatus::COMPLETED => $transaction->update(['completed_at' => now()]),
+                TransactionStatus::FAILED => $transaction->update(['cancelled_at' => now()]),
+                default => null,
+            };
+        }
     }
 
     /**

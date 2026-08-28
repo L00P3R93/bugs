@@ -3,29 +3,34 @@
 namespace App\Observers;
 
 use App\Models\Wallet;
+use App\Notifications\WalletLockedNotification;
+use Illuminate\Support\Str;
 
 class WalletObserver
 {
     public function creating(Wallet $wallet): void
     {
-        // Generate unique account number if not already set
-        if (! $wallet->wallet_no) {
-            do {
-                $walletNo = 'WT'.str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
-            } while (Wallet::query()->where('wallet_no', $walletNo)->exists());
-
-            $wallet->wallet_no = $walletNo;
-        }
+        $wallet->wallet_no = 'BUGW-'.strtoupper(uniqid());
         $wallet->balance = 0;
-        $wallet->status = 'active';
+        $wallet->available_balance = 0;
+        $wallet->pending_balance = 0;
+        $wallet->total_earned = 0;
     }
+
 
     /**
      * Handle the Wallet "created" event.
      */
     public function created(Wallet $wallet): void
     {
-        //
+        // Initialize balances if not set
+        if (is_null($wallet->available_balance)) {
+            $wallet->update([
+                'available_balance' => $wallet->balance,
+                'pending_balance' => 0,
+                'total_earned' => 0,
+            ]);
+        }
     }
 
     /**
@@ -33,7 +38,13 @@ class WalletObserver
      */
     public function updated(Wallet $wallet): void
     {
-        //
+        if ($wallet->wasChanged('is_locked') && $wallet->is_locked) {
+            // Notify user of wallet lock
+            $user = $wallet->user;
+            if ($user) {
+                $user->notify(new WalletLockedNotification($wallet, $wallet->locked_reason ?? 'No reason provided'));
+            }
+        }
     }
 
     /**

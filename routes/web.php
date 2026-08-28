@@ -12,7 +12,7 @@ Route::middleware(['auth'])->get('/dashboard', function () {
         return redirect()->route('verification.notice');
     }
 
-    return redirect('/admin');
+    return redirect('/console');
 })->name('dashboard');
 
 Route::post('/result', WithdrawResultController::class);

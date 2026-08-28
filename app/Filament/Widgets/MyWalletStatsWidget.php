@@ -2,8 +2,7 @@
 
 namespace App\Filament\Widgets;
 
-use App\Enums\TransactionStatus;
-use App\Enums\TransactionType;
+use App\Services\WalletService;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -35,54 +34,37 @@ class MyWalletStatsWidget extends BaseWidget
             ];
         }
 
-        $completedPayouts = (float) $wallet->transactions()
-            ->where('type', TransactionType::PAYOUT)
-            ->where('status', TransactionStatus::COMPLETED)
-            ->sum('amount');
-
-        $pendingPayouts = $wallet->transactions()
-            ->where('type', TransactionType::PAYOUT)
-            ->where('status', TransactionStatus::PENDING)
-            ->count();
-
-        $completedWithdrawals = (float) $wallet->withdraws()
-            ->where('status', TransactionStatus::COMPLETED)
-            ->sum('amount');
-
-        $pendingWithdrawals = $wallet->withdraws()
-            ->where('status', TransactionStatus::PENDING)
-            ->count();
-
-        $totalTransactions = $wallet->transactions()->count();
+        $walletService = app(WalletService::class);
+        $stats = $walletService->getStats($wallet);
 
         return [
-            Stat::make('Wallet Balance', number_format((float) $wallet->balance, 2))
-                ->description('Available balance')
+            Stat::make('Available Balance', number_format($stats['available_balance'], 2))
+                ->description('Ready to withdraw')
                 ->descriptionIcon('heroicon-m-wallet')
-                ->color('primary'),
-
-            Stat::make('Total Payouts Received', number_format($completedPayouts, 2))
-                ->description('Bug bounty rewards credited')
-                ->descriptionIcon('heroicon-m-arrow-trending-up')
                 ->color('success'),
 
-            Stat::make('Pending Payouts', number_format($pendingPayouts))
-                ->description('Payouts being processed')
+            Stat::make('Pending Balance', number_format($stats['pending_balance'], 2))
+                ->description('7-day holding period')
                 ->descriptionIcon('heroicon-m-clock')
                 ->color('warning'),
 
-            Stat::make('Total Withdrawn', number_format($completedWithdrawals, 2))
-                ->description('Funds successfully withdrawn')
-                ->descriptionIcon('heroicon-m-arrow-trending-down')
+            Stat::make('Total Earned', number_format($stats['total_earned'], 2))
+                ->description('Lifetime earnings')
+                ->descriptionIcon('heroicon-m-arrow-trending-up')
+                ->color('primary'),
+
+            Stat::make('Daily Remaining', number_format($stats['daily_remaining'], 2))
+                ->description('Today\'s withdrawal limit')
+                ->descriptionIcon('heroicon-m-calendar')
                 ->color('info'),
 
-            Stat::make('Pending Withdrawals', number_format($pendingWithdrawals))
-                ->description('Withdrawal requests in queue')
-                ->descriptionIcon('heroicon-m-clock')
-                ->color('warning'),
+            Stat::make('Monthly Remaining', number_format($stats['monthly_remaining'], 2))
+                ->description('This month\'s withdrawal limit')
+                ->descriptionIcon('heroicon-m-calendar-days')
+                ->color('info'),
 
-            Stat::make('Total Transactions', number_format($totalTransactions))
-                ->description('All-time transaction count')
+            Stat::make('Total Transactions', number_format($stats['completed_payouts'] + $stats['completed_withdrawals']))
+                ->description('All-time completed')
                 ->descriptionIcon('heroicon-m-arrows-right-left')
                 ->color('gray'),
         ];

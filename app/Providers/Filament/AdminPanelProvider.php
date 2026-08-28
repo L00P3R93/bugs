@@ -30,8 +30,8 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            ->path('admin')
-            ->homeUrl('/admin')
+            ->path('console')
+            ->homeUrl('/')
             ->userMenu(position: UserMenuPosition::Sidebar)
             ->userMenuItems([
                 'profile' => fn (Action $action) => $action
@@ -64,7 +64,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([])
             ->navigationGroups([
-                'Kadi Games',
+                'Kadi Players',
                 'Wallets & Transactions',
                 'Bug Management',
                 'User Management',

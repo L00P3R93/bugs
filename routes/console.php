@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\ProcessPendingPayoutsJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
@@ -19,3 +20,9 @@ Schedule::command('withdrawals:process-pending')
     ->everyMinute()
     ->withoutOverlapping()
     ->onFailure(fn () => Log::channel('mpesa')->error('B2C processing job failed'));
+
+Schedule::job(new ProcessPendingPayoutsJob)
+    ->dailyAt('01:00')
+    ->timezone('Africa/Nairobi')
+    ->withoutOverlapping()
+    ->onFailure(fn () => Log::error('Process pending payouts job failed'));

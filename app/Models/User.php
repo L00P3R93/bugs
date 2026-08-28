@@ -37,6 +37,7 @@ class User extends Authenticatable implements Commenter, FilamentUser, HasAvatar
         'name',
         'email',
         'password',
+        'notification_preferences',
     ];
 
     /**
@@ -62,6 +63,7 @@ class User extends Authenticatable implements Commenter, FilamentUser, HasAvatar
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'status' => UserStatus::class,
+            'notification_preferences' => 'array',
         ];
     }
 
@@ -149,6 +151,37 @@ class User extends Authenticatable implements Commenter, FilamentUser, HasAvatar
     public function isLinked(): bool
     {
         return $this->linked_id !== null;
+    }
+
+    /**
+     * Check if user prefers a specific notification type on a channel.
+     */
+    public function prefersNotification(string $type, string $channel = 'email'): bool
+    {
+        $prefs = $this->notification_preferences ?? $this->getDefaultPreferences();
+
+        return $prefs[$type][$channel] ?? true;
+    }
+
+    /**
+     * Get default notification preferences.
+     *
+     * @return array<string, array<string, bool>>
+     */
+    public function getDefaultPreferences(): array
+    {
+        return [
+            'daily_payouts_summary' => ['email' => true, 'database' => true],
+            'withdrawals_summary' => ['email' => true, 'database' => true],
+            'bug_submitted' => ['email' => true, 'database' => true],
+            'bug_status_changed' => ['email' => true, 'database' => true],
+            'bug_comment' => ['email' => true, 'database' => true],
+            'bug_mention' => ['email' => true, 'database' => true],
+            'payment_received' => ['email' => true, 'database' => true],
+            'withdrawal_completed' => ['email' => true, 'database' => true],
+            'withdrawal_failed' => ['email' => true, 'database' => true],
+            'wallet_locked' => ['email' => true, 'database' => true],
+        ];
     }
 
     /**

@@ -6,6 +6,9 @@ use App\Enums\BugStatus;
 use App\Models\Bug;
 use App\Models\Category;
 use App\Models\Severity;
+use App\Notifications\BugStatusChangedNotification;
+use App\Notifications\BugSubmittedNotification;
+use App\Services\AdminNotificationRouter;
 
 class BugObserver
 {
@@ -35,6 +38,10 @@ class BugObserver
             .' submitted by '.self::badge($bug->reporter->name, 'info')
             .' on '.self::badge(now()->toDateTimeString(), 'gray');
         $bug->saveQuietly();
+
+        // Notify admins about new bug
+        $notification = new BugSubmittedNotification($bug);
+        AdminNotificationRouter::notifyAdmins($notification);
     }
 
     public function updated(Bug $bug): void
@@ -49,6 +56,18 @@ class BugObserver
             $newEntries[] = 'Status changed from '.self::badge($oldStatus->getLabel(), 'gray')
                 .' to '.self::badge($bug->status->getLabel(), (string) $bug->status->getColor())
                 .' by '.$actor.' on '.$timestamp;
+
+            // Notify reporter of status change
+            $reporter = $bug->reporter;
+            if ($reporter) {
+                $notification = new BugStatusChangedNotification(
+                    bug: $bug,
+                    oldStatus: $oldStatus->value,
+                    newStatus: $bug->status->value,
+                    actor: auth()->user()?->name ?? 'System'
+                );
+                $reporter->notify($notification);
+            }
         }
 
         if ($bug->wasChanged('category_id')) {

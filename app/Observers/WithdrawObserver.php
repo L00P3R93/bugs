@@ -2,7 +2,11 @@
 
 namespace App\Observers;
 
+use App\Enums\TransactionStatus;
 use App\Models\Withdraw;
+use App\Notifications\WithdrawalCompletedNotification;
+use App\Notifications\WithdrawalFailedNotification;
+use App\Services\AdminNotificationRouter;
 
 class WithdrawObserver
 {
@@ -19,7 +23,27 @@ class WithdrawObserver
      */
     public function updated(Withdraw $withdraw): void
     {
-        //
+        if ($withdraw->wasChanged('status')) {
+            $user = $withdraw->wallet?->user;
+
+            if ($withdraw->status === TransactionStatus::COMPLETED) {
+                // Notify user of successful withdrawal
+                if ($user) {
+                    $notification = new WithdrawalCompletedNotification($withdraw);
+                    $user->notify($notification);
+                }
+            } elseif ($withdraw->status === TransactionStatus::FAILED) {
+                // Notify user of failed withdrawal
+                if ($user) {
+                    $notification = new WithdrawalFailedNotification($withdraw);
+                    $user->notify($notification);
+                }
+
+                // Notify admins of failure
+                $adminNotification = new WithdrawalFailedNotification($withdraw);
+                AdminNotificationRouter::notifyAdmins($adminNotification);
+            }
+        }
     }
 
     /**

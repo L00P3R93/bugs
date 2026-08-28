@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Enums\TransactionStatus;
 use App\Enums\TransactionType;
+use App\Models\FraudFlag;
 use App\Models\Transaction;
 use App\Models\Wallet;
 use App\Models\Withdraw;
@@ -28,6 +29,8 @@ class AdminWalletStatsWidget extends BaseWidget
     protected function getStats(): array
     {
         $totalBalance = (float) Wallet::sum('balance');
+        $totalAvailable = (float) Wallet::sum('available_balance');
+        $totalPending = (float) Wallet::sum('pending_balance');
         $totalWallets = Wallet::count();
 
         $completedPayouts = Transaction::where('type', TransactionType::PAYOUT)
@@ -46,11 +49,24 @@ class AdminWalletStatsWidget extends BaseWidget
 
         $totalTransactions = Transaction::count();
 
+        $openFraudFlags = FraudFlag::where('status', 'open')
+            ->count();
+
         return [
             Stat::make('Total Wallet Balance', number_format($totalBalance, 2))
                 ->description("{$totalWallets} active wallets")
                 ->descriptionIcon('heroicon-m-wallet')
                 ->color('primary'),
+
+            Stat::make('Available Balance', number_format($totalAvailable, 2))
+                ->description('Ready for withdrawal')
+                ->descriptionIcon('heroicon-m-check-circle')
+                ->color('success'),
+
+            Stat::make('Pending Balance', number_format($totalPending, 2))
+                ->description('7-day holding period')
+                ->descriptionIcon('heroicon-m-clock')
+                ->color('warning'),
 
             Stat::make('Total Payouts Issued', number_format((float) $completedPayouts, 2))
                 ->description('Completed bug reward payouts')
@@ -58,7 +74,7 @@ class AdminWalletStatsWidget extends BaseWidget
                 ->color('success'),
 
             Stat::make('Pending Payouts', number_format($pendingPayouts))
-                ->description('Awaiting processing')
+                ->description('Awaiting 7-day hold')
                 ->descriptionIcon('heroicon-m-clock')
                 ->color('warning'),
 
@@ -71,6 +87,11 @@ class AdminWalletStatsWidget extends BaseWidget
                 ->description('Withdrawal requests in queue')
                 ->descriptionIcon('heroicon-m-clock')
                 ->color('warning'),
+
+            Stat::make('Open Fraud Flags', number_format($openFraudFlags))
+                ->description('Requires investigation')
+                ->descriptionIcon('heroicon-m-shield-exclamation')
+                ->color($openFraudFlags > 0 ? 'danger' : 'success'),
 
             Stat::make('Total Transactions', number_format($totalTransactions))
                 ->description('All-time transaction count')

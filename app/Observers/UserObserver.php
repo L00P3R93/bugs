@@ -14,7 +14,7 @@ class UserObserver
         // Generate unique account number if not already set
         if (! $user->account_no) {
             do {
-                $accountNo = 'ACC'.str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
+                $accountNo = 'ACC-'.strtoupper(uniqid());
             } while (User::where('account_no', $accountNo)->exists());
 
             $user->account_no = $accountNo;

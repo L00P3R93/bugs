@@ -3,9 +3,11 @@
 namespace App\Filament\Pages;
 
 use App\Facades\KadiApi;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
@@ -50,6 +52,7 @@ class EditProfilePage extends Page implements HasForms
             'phone' => $user->phone,
             'account_no' => $user->account_no,
             'profile_photo' => $user->getFirstMedia('avatars'),
+            'notification_preferences' => $user->notification_preferences ?? $user->getDefaultPreferences(),
         ]);
     }
 
@@ -228,6 +231,89 @@ class EditProfilePage extends Page implements HasForms
                                             ->requiredWith('password'),
                                     ])->compact()->columns(1),
                             ]),
+
+                        Tab::make('Notifications')
+                            ->icon(Heroicon::OutlinedBell)
+                            ->schema([
+                                Section::make('Console Command Notifications')
+                                    ->description('Summary notifications for admin users')
+                                    ->schema([
+                                        Grid::make(2)->schema([
+                                            Toggle::make('notification_preferences.daily_payouts_summary.email')
+                                                ->label('Daily Payouts Summary (Email)')
+                                                ->default(true),
+                                            Toggle::make('notification_preferences.daily_payouts_summary.database')
+                                                ->label('Daily Payouts Summary (Database)')
+                                                ->default(true),
+                                            Toggle::make('notification_preferences.withdrawals_summary.email')
+                                                ->label('Withdrawals Summary (Email)')
+                                                ->default(true),
+                                            Toggle::make('notification_preferences.withdrawals_summary.database')
+                                                ->label('Withdrawals Summary (Database)')
+                                                ->default(true),
+                                        ]),
+                                    ]),
+
+                                Section::make('Bug Notifications')
+                                    ->schema([
+                                        Grid::make(2)->schema([
+                                            Toggle::make('notification_preferences.bug_submitted.email')
+                                                ->label('Bug Submitted (Email)')
+                                                ->default(true),
+                                            Toggle::make('notification_preferences.bug_submitted.database')
+                                                ->label('Bug Submitted (Database)')
+                                                ->default(true),
+                                            Toggle::make('notification_preferences.bug_status_changed.email')
+                                                ->label('Bug Status Changed (Email)')
+                                                ->default(true),
+                                            Toggle::make('notification_preferences.bug_status_changed.database')
+                                                ->label('Bug Status Changed (Database)')
+                                                ->default(true),
+                                            Toggle::make('notification_preferences.bug_comment.email')
+                                                ->label('Bug Comment (Email)')
+                                                ->default(true),
+                                            Toggle::make('notification_preferences.bug_comment.database')
+                                                ->label('Bug Comment (Database)')
+                                                ->default(true),
+                                            Toggle::make('notification_preferences.bug_mention.email')
+                                                ->label('Bug Mention (Email)')
+                                                ->default(true),
+                                            Toggle::make('notification_preferences.bug_mention.database')
+                                                ->label('Bug Mention (Database)')
+                                                ->default(true),
+                                        ]),
+                                    ]),
+
+                                Section::make('Financial Notifications')
+                                    ->schema([
+                                        Grid::make(2)->schema([
+                                            Toggle::make('notification_preferences.payment_received.email')
+                                                ->label('Payment Received (Email)')
+                                                ->default(true),
+                                            Toggle::make('notification_preferences.payment_received.database')
+                                                ->label('Payment Received (Database)')
+                                                ->default(true),
+                                            Toggle::make('notification_preferences.withdrawal_completed.email')
+                                                ->label('Withdrawal Completed (Email)')
+                                                ->default(true),
+                                            Toggle::make('notification_preferences.withdrawal_completed.database')
+                                                ->label('Withdrawal Completed (Database)')
+                                                ->default(true),
+                                            Toggle::make('notification_preferences.withdrawal_failed.email')
+                                                ->label('Withdrawal Failed (Email)')
+                                                ->default(true),
+                                            Toggle::make('notification_preferences.withdrawal_failed.database')
+                                                ->label('Withdrawal Failed (Database)')
+                                                ->default(true),
+                                            Toggle::make('notification_preferences.wallet_locked.email')
+                                                ->label('Wallet Locked (Email)')
+                                                ->default(true),
+                                            Toggle::make('notification_preferences.wallet_locked.database')
+                                                ->label('Wallet Locked (Database)')
+                                                ->default(true),
+                                        ]),
+                                    ]),
+                            ]),
                     ])
                     ->columnSpanFull()
                     ->contained(false)
@@ -249,6 +335,7 @@ class EditProfilePage extends Page implements HasForms
                 'data.phone' => ['required', 'string', 'regex:/^(?:\+254|254|0)(7\d{8}|1\d{8})$/', 'unique:users,phone,'.$user->id],
                 'data.profile_photo' => 'nullable|array',
                 'data.profile_photo.*' => 'nullable|file|mimes:jpeg,jpg,png,gif|max:10240',
+                'data.notification_preferences' => 'nullable|array',
             ]);
 
             $data = $this->data;
@@ -260,6 +347,7 @@ class EditProfilePage extends Page implements HasForms
                 'email' => $data['email'],
                 'phone' => $data['phone'],
                 'account_no' => $data['account_no'],
+                'notification_preferences' => $data['notification_preferences'] ?? $user->getDefaultPreferences(),
             ]);
 
             if (! empty($data['password'])) {

@@ -23,11 +23,11 @@ class ProcessVerifiedUser implements ShouldQueue
     public function handle(): void
     {
         // Pull the plain password cached at registration (one-time read + delete)
-        $plainPassword = Cache::pull("user.plain_password.{$this->user->id}");
-
-        $customerId = $this->registerWithKadiApi();
-        $this->insertIntoKadiDatabase($plainPassword, $customerId);
-        $this->sendWelcomeEmail($plainPassword);
+        //        $plainPassword = Cache::pull("user.plain_password.{$this->user->id}");
+        //
+        //        $customerId = $this->registerWithKadiApi();
+        //        $this->insertIntoKadiDatabase($plainPassword, $customerId);
+        //        $this->sendWelcomeEmail($plainPassword);
     }
 
     /**

@@ -38,7 +38,7 @@ class CreateNewUser implements CreatesNewUsers
 
         $user->assignRole('Player');
 
-        Cache::put("user.plain_password.{$user->id}", $input['password'], now()->addHours(48));
+        //        Cache::put("user.plain_password.{$user->id}", $input['password'], now()->addHours(48));
 
         // Don't automatically login, let Fortify handle it with proper redirect
         return $user;

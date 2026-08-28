@@ -15,7 +15,6 @@ class WelcomeEmail extends Mailable
 
     public function __construct(
         public User $user,
-        public ?string $kadiPlayPassword,
     ) {}
 
     public function envelope(): Envelope
@@ -28,10 +27,9 @@ class WelcomeEmail extends Mailable
     public function content(): Content
     {
         return new Content(
-            markdown: 'mail.welcome',
+            view: 'mail.welcome',
             with: [
                 'user' => $this->user,
-                'kadiPlayPassword' => $this->kadiPlayPassword,
                 'appName' => config('app.name'),
                 'appUrl' => config('app.url'),
             ],
