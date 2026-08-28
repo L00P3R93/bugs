@@ -62,4 +62,9 @@ class FraudFlagResource extends Resource
                 SoftDeletingScope::class,
             ]);
     }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()->isAdmin();
+    }
 }

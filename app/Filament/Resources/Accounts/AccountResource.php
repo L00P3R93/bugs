@@ -44,4 +44,9 @@ class AccountResource extends Resource
             'view' => ViewAccount::route('/{record}'),
         ];
     }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()->isAdmin();
+    }
 }
