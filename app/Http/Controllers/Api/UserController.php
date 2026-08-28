@@ -25,7 +25,7 @@ class UserController extends Controller
     {
         try {
             // Debugging Only
-            Log::info("API Create Bugs account Request: {$request->all()}");
+            Log::info("API Create Bugs account Request", ['request' => $request->all()]);
             return response()->json([
                 'message' => 'Bugs AccountRequest Received',
                 'user_id' => 1,
