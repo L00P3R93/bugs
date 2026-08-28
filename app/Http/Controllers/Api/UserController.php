@@ -27,7 +27,7 @@ class UserController extends Controller
             $validated = $request->validated();
             $password = $validated['password'];
             unset($validated['password']);
-            $phone = $validated['phone'] == '' ? null : $validated['phone'];
+            $phone = (empty($validated['phone']) || $validated['phone'] == '') ? null : $validated['phone'];
             unset($validated['phone']);
 
 
@@ -47,7 +47,7 @@ class UserController extends Controller
             ], 201);
 
         } catch (\Exception $e) {
-            Log::error("API Create Bugs account Error: {$e->getMessage()}");
+            Log::error("API Create Bugs account Error: {$e->getMessage()}", ['request' => $request->all()]);
 
             return response()->json([
                 'message' => 'Failed to create Bugs Account',
