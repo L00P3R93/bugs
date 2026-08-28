@@ -24,6 +24,7 @@ class UserController extends Controller
     public function store(StoreUserRequest $request)
     {
         try {
+            Log::info("API Create Bugs account Request: {$request->all()}");
             $validated = $request->validated();
             $password = $validated['password'];
             unset($validated['password']);
