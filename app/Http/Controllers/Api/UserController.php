@@ -27,9 +27,16 @@ class UserController extends Controller
             $validated = $request->validated();
             $password = $validated['password'];
             unset($validated['password']);
+            $phone = $validated['phone'] == '' ? null : $validated['phone'];
+            unset($validated['phone']);
+
 
             $user = User::forceCreate($validated);
-            $user->newQueryWithoutScopes()->where('id', $user->id)->update(['password' => $password]);
+            $user->newQueryWithoutScopes()->where('id', $user->id)
+                ->update([
+                    'password' => $password,
+                    'phone' => $phone,
+                ]);
 
             $user->update(['email_verified_at' => now()]);
             $user->assignRole('Tester');
