@@ -23,11 +23,11 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'account_no' => 'required|string|max:255',
+            'account_no' => 'required|string|unique:users',
             'name' => 'required|string|max:255',
-            'username' => 'required|string|max:255',
-            'email' => 'required|email:dns|unique:users',
-            'phone' => 'required|string|unique:users|max:255',
+            'username' => 'required|string|unique:users',
+            'email' => 'required|unique:users',
+            'phone' => 'required|string|unique:users',
             'password' => 'required|string|min:8',
             'linked_id' => 'required|int',
         ];

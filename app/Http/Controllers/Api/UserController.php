@@ -24,12 +24,14 @@ class UserController extends Controller
     public function store(StoreUserRequest $request)
     {
         try {
-            $user = User::create($request->validated());
-            if (! $user) {
-                return response()->json([
-                    'message' => 'Failed to create customer',
-                ], 500);
-            }
+            $validated = $request->validated();
+            $hashedPassword = $validated['password'];
+            unset($validated['password']);
+
+            $user = User::forceCreate($validated);
+            $user->setAttribute('password', $hashedPassword);
+            $user->save();
+
             $user->update(['email_verified_at' => now()]);
             $user->assignRole('Tester');
 
