@@ -30,6 +30,7 @@ class Wallet extends Model
         'daily_earned',
         'daily_target_reached',
         'last_daily_reset_at',
+        'daily_stats_snapshot',
         'daily_withdrawal_limit',
         'monthly_withdrawal_limit',
         'status',
@@ -51,6 +52,7 @@ class Wallet extends Model
             'daily_games_played' => 'integer',
             'daily_target_reached' => 'boolean',
             'last_daily_reset_at' => 'datetime',
+            'daily_stats_snapshot' => 'array',
             'status' => WalletStatus::class,
             'is_locked' => 'boolean',
             'locked_at' => 'datetime',
@@ -90,6 +92,7 @@ class Wallet extends Model
             'daily_earned' => 0,
             'daily_target_reached' => false,
             'last_daily_reset_at' => now(),
+            'daily_stats_snapshot' => null,
         ]);
     }
 

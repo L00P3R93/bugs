@@ -76,9 +76,19 @@ class WithdrawAction extends Action
                             ->placeholder('Enter amount to withdraw'),
                     ]),
             ])
-            ->action(function (array $data, $livewire) use ($wallet): void {
+            ->action(function (array $data, $livewire) use ($wallet, $user): void {
+                if (blank($user->phone)) {
+                    Notification::make()
+                        ->title('Phone Number Required')
+                        ->body('Please add a phone number to your profile before requesting a withdrawal.')
+                        ->danger()
+                        ->persistent()
+                        ->send();
+
+                    return;
+                }
+
                 try {
-                    // Create withdrawal transaction — observer sets PENDING_APPROVAL
                     $wallet->transactions()->create([
                         'amount' => $data['amount'],
                         'type' => 'withdraw',

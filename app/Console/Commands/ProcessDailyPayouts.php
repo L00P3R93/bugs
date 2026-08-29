@@ -22,6 +22,29 @@ class ProcessDailyPayouts extends Command
 
     protected $description = 'Hourly payout processing — credits testers for games played and manages daily target resets';
 
+    private const GAME_RATES = [
+        '2_players' => 2.50,
+        '3_players' => 3.50,
+        '4_players' => 4.50,
+    ];
+
+    private const GAME_TARGETS = [
+        '2_players' => 40,
+        '3_players' => 29,
+        '4_players' => 23,
+    ];
+
+    private const TOURNAMENT_RATE = 3.00;
+
+    private const TOURNAMENT_TARGET = 3;
+
+    private const JACKPOT_RATE = 3.00;
+
+    private const JACKPOT_TARGET = 3;
+
+    /**
+     * @throws \Throwable
+     */
     public function handle(): int
     {
         $today = now()->timezone('Africa/Nairobi')->toDateString();
@@ -53,7 +76,6 @@ class ProcessDailyPayouts extends Command
 
                 // Step 1: Midnight reset — if last reset was not today, reset daily stats
                 if ($wallet->last_daily_reset_at === null || $wallet->last_daily_reset_at->toDateString() !== $today) {
-                    // If target was NOT reached yesterday, reset balance to zero
                     if (! $wallet->daily_target_reached && $wallet->daily_games_played > 0) {
                         $wallet->resetDailyBalance();
                         $this->line("Reset balance for tester {$tester->id} ({$tester->name}) — target not reached yesterday.");
@@ -63,63 +85,83 @@ class ProcessDailyPayouts extends Command
                     $reset++;
                 }
 
-                // Step 2: Fetch today's game count from KadiApi
+                // Step 2: Fetch today's stats from KadiApi
                 $stats = KadiApi::getPlayerStats($tester->linked_id, $today);
-                // TODO: $stats array also contains 'games', 'tournament', and 'jackpots' keys with sub-arrays
-                // TODO: Implement targets and per game payouts for games, tournaments, and jackpots
-                $totalGames = (int) ($stats['total'] ?? 0);
+                $current = $stats['data'] ?? $stats;
 
-                // Step 3: Calculate new games since last check
-                $newGames = $totalGames - $wallet->daily_games_played;
+                // Step 3: Calculate deltas from previous snapshot
+                $previous = $wallet->daily_stats_snapshot ?? $this->emptyStats();
 
-                if ($newGames <= 0) {
+                $gamesDelta = $this->calculateDelta($previous['games'] ?? [], $current['games'] ?? [], self::GAME_RATES);
+                $tournamentDelta = max(0, ($current['tournament']['total'] ?? 0) - ($previous['tournament']['total'] ?? 0));
+                $jackpotDelta = max(0, ($current['jackpots']['total'] ?? 0) - ($previous['jackpots']['total'] ?? 0));
+
+                $totalNewGames = $gamesDelta['total'] + $tournamentDelta + $jackpotDelta;
+
+                if ($totalNewGames <= 0) {
+                    // Still update snapshot even if no new games
+                    $wallet->update(['daily_stats_snapshot' => $current]);
+
                     continue;
                 }
 
-                // Step 4: Credit earnings for new games
-                $amount = $newGames * 3.50;
+                // Step 4: Calculate earnings
+                $gamesEarnings = $gamesDelta['earnings'];
+                $tournamentEarnings = $tournamentDelta * self::TOURNAMENT_RATE;
+                $jackpotEarnings = $jackpotDelta * self::JACKPOT_RATE;
+                $totalEarnings = $gamesEarnings + $tournamentEarnings + $jackpotEarnings;
 
-                DB::transaction(function () use ($wallet, $tester, $amount, $newGames, $today, &$paid, &$paidDetails, &$totalAmount) {
+                DB::transaction(function () use ($jackpotEarnings, $tournamentEarnings, $gamesEarnings, $wallet, $tester, $totalEarnings, $totalNewGames, $gamesDelta, $tournamentDelta, $jackpotDelta, $current, $today, &$paid, &$paidDetails, &$totalAmount) {
                     $wallet = $wallet->lockForUpdate()->first();
 
-                    // Create payout transaction — completed immediately (no hold)
                     $transaction = Transaction::query()->create([
                         'wallet_id' => $wallet->id,
                         'user_id' => $tester->id,
                         'type' => TransactionType::PAYOUT,
-                        'amount' => $amount,
-                        'net_amount' => $amount,
+                        'amount' => $totalEarnings,
+                        'net_amount' => $totalEarnings,
                         'status' => TransactionStatus::COMPLETED,
                         'completed_at' => now(),
                     ]);
 
-                    // Credit wallet directly
-                    $wallet->increment('balance', $amount);
-                    $wallet->increment('available_balance', $amount);
-                    $wallet->increment('total_earned', $amount);
-                    $wallet->increment('daily_games_played', $newGames);
-                    $wallet->increment('daily_earned', $amount);
+                    $wallet->increment('balance', $totalEarnings);
+                    $wallet->increment('available_balance', $totalEarnings);
+                    $wallet->increment('total_earned', $totalEarnings);
+                    $wallet->increment('daily_games_played', $totalNewGames);
+                    $wallet->increment('daily_earned', $totalEarnings);
+                    $wallet->update(['daily_stats_snapshot' => $current]);
 
-                    $this->line("Paid tester {$tester->id} ({$tester->name}): KES {$amount} for {$newGames} new games ({$wallet->daily_games_played} total today).");
-                    Log::info("Hourly payout: tester {$tester->id} credited KES {$amount} for {$newGames} new games on {$today}. Total today: {$wallet->daily_games_played} games.");
+                    $breakdown = "games: {$gamesDelta['total']} (KES {$gamesEarnings}), tournaments: {$tournamentDelta} (KES {$tournamentEarnings}), jackpots: {$jackpotDelta} (KES {$jackpotEarnings})";
+                    $this->line("Paid tester {$tester->id} ({$tester->name}): KES {$totalEarnings} for {$totalNewGames} new activities ({$breakdown}). Total today: {$wallet->daily_games_played} games.");
+                    Log::info("Hourly payout: tester {$tester->id} credited KES {$totalEarnings} on {$today} — {$breakdown}. Total today: {$wallet->daily_games_played}.");
 
                     $paidDetails[] = [
                         'name' => $tester->name,
                         'email' => $tester->email,
-                        'amount' => $amount,
-                        'games' => $newGames,
+                        'amount' => $totalEarnings,
+                        'games' => $totalNewGames,
                         'total_games' => $wallet->daily_games_played,
                     ];
-                    $totalAmount += $amount;
+                    $totalAmount += $totalEarnings;
                     $paid++;
                 });
 
                 // Step 5: Check if daily target just reached
                 $wallet->refresh();
-                if ($wallet->daily_games_played >= 30 && ! $wallet->daily_target_reached) {
+                $gamesTotal = $current['games']['total'] ?? 0;
+                $tournamentTotal = $current['tournament']['total'] ?? 0;
+                $jackpotTotal = $current['jackpots']['total'] ?? 0;
+
+                $gamesTargetMet = $gamesTotal >= self::GAME_TARGETS['2_players']
+                    || $gamesTotal >= self::GAME_TARGETS['3_players']
+                    || $gamesTotal >= self::GAME_TARGETS['4_players'];
+                $tournamentTargetMet = $tournamentTotal >= self::TOURNAMENT_TARGET;
+                $jackpotTargetMet = $jackpotTotal >= self::JACKPOT_TARGET;
+
+                if (($gamesTargetMet || $tournamentTargetMet || $jackpotTargetMet) && ! $wallet->daily_target_reached) {
                     $wallet->update(['daily_target_reached' => true]);
                     $this->line("Tester {$tester->id} ({$tester->name}) reached daily target! Withdrawals unlocked.");
-                    Log::info("Daily target reached: tester {$tester->id} hit {$wallet->daily_games_played} games.");
+                    Log::info("Daily target reached: tester {$tester->id} — games: {$gamesTotal}, tournaments: {$tournamentTotal}, jackpots: {$jackpotTotal}.");
 
                     $tester->notify(new DailyTargetReachedNotification($wallet));
                 }
@@ -133,7 +175,6 @@ class ProcessDailyPayouts extends Command
 
         $this->info("Done. Paid: {$paid}, Skipped: {$skipped}, Resets: {$reset}, Errors: {$errors}.");
 
-        // Send summary notification to admins
         if ($paid > 0 || $errors > 0) {
             $notification = new DailyPayoutsSummaryNotification(
                 date: $today,
@@ -149,5 +190,34 @@ class ProcessDailyPayouts extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    private function calculateDelta(array $previous, array $current, array $rates): array
+    {
+        $total = 0;
+        $earnings = 0.0;
+
+        foreach ($rates as $key => $rate) {
+            $prev = $previous[$key] ?? 0;
+            $curr = $current[$key] ?? 0;
+            $delta = max(0, $curr - $prev);
+            $total += $delta;
+            $earnings += $delta * $rate;
+        }
+
+        return [
+            'total' => $total,
+            'earnings' => $earnings,
+        ];
+    }
+
+    private function emptyStats(): array
+    {
+        return [
+            'total' => 0,
+            'games' => ['total' => 0, '2_players' => 0, '3_players' => 0, '4_players' => 0],
+            'tournament' => ['total' => 0, '3_rounds' => 0, '4_rounds' => 0, '5_rounds' => 0],
+            'jackpots' => ['total' => 0, '13_rounds' => 0, '17_rounds' => 0, '21_rounds' => 0],
+        ];
     }
 }

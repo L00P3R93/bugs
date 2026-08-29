@@ -49,7 +49,9 @@ class TransactionObserver
                 throw new \Exception('Insufficient balance');
             }
         } else {
-            $transaction->status = TransactionStatus::PENDING;
+            if (! $transaction->status) {
+                $transaction->status = TransactionStatus::PENDING;
+            }
         }
     }
 
