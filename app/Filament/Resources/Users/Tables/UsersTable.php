@@ -127,7 +127,7 @@ class UsersTable
                     ->icon('hugeicons-user-switch')
                     ->color('indigo')
                     ->tooltip('Impersonate User')
-                    ->visible(fn ($record) => ! $record->isAdmin())
+                    ->visible(fn ($record) => auth()->user()->isAdmin() && ! $record->isAdmin())
                     ->redirectTo(url('/console')),
             ])
             ->groups([

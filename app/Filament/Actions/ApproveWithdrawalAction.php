@@ -34,7 +34,7 @@ class ApproveWithdrawalAction extends Action
             ->color('warning')
             ->slideOver()
             ->modalWidth('md')
-            ->visible(fn (Transaction $record): bool => $record->type->value === 'withdraw' && $record->status === TransactionStatus::PENDING_APPROVAL)
+            ->visible(fn (Transaction $record): bool => auth()->user()->isAdmin() && $record->type->value === 'withdraw' && $record->status === TransactionStatus::PENDING_APPROVAL)
             ->fillForm(function (Transaction $record): array {
                 $withdraw = $record->withdraw;
 

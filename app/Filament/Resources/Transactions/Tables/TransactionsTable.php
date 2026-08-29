@@ -4,12 +4,15 @@ namespace App\Filament\Resources\Transactions\Tables;
 
 use App\Enums\TransactionStatus;
 use App\Enums\TransactionType;
+use App\Filament\Actions\ApproveWithdrawalAction;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -65,14 +68,27 @@ class TransactionsTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
+                ApproveWithdrawalAction::make('approve_withdrawal'),
                 ViewAction::make()->iconButton()->icon('hugeicons-file-view')->color('primary')->tooltip('View Transaction Details'),
-                EditAction::make()->iconButton()->icon('hugeicons-note-edit')->color('info')->tooltip('Edit Transaction'),
+                EditAction::make()
+                    ->iconButton()
+                    ->icon('hugeicons-note-edit')
+                    ->color('info')
+                    ->tooltip('Edit Transaction')
+                    ->visible(fn () => auth()->user()->isAdmin()),
+                DeleteAction::make()
+                    ->requiresConfirmation()
+                    ->iconButton()
+                    ->icon(Heroicon::OutlinedTrash)
+                    ->color('danger')
+                    ->tooltip('Delete Transaction')
+                    ->visible(fn () => auth()->user()->isAdmin()),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                    ForceDeleteBulkAction::make(),
-                    RestoreBulkAction::make(),
+                    DeleteBulkAction::make()->visible(fn () => auth()->user()->isAdmin()),
+                    ForceDeleteBulkAction::make()->visible(fn () => auth()->user()->isAdmin()),
+                    RestoreBulkAction::make()->visible(fn () => auth()->user()->isAdmin()),
                 ]),
             ]);
     }

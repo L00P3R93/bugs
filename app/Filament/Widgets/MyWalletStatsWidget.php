@@ -48,11 +48,6 @@ class MyWalletStatsWidget extends BaseWidget
                 ->descriptionIcon('heroicon-m-wallet')
                 ->color('success'),
 
-            Stat::make('Pending Balance', number_format($stats['pending_balance'], 2))
-                ->description('Holding period')
-                ->descriptionIcon('heroicon-m-clock')
-                ->color('warning'),
-
             Stat::make('Today\'s Earnings', number_format($stats['daily_earned'], 2))
                 ->description('Earned today')
                 ->descriptionIcon('heroicon-m-arrow-trending-up')

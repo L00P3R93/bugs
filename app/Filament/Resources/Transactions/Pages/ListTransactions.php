@@ -16,7 +16,11 @@ class ListTransactions extends ListRecords
     {
         return [
             WithdrawAction::make('withdraw_action'),
-            CreateAction::make()->icon('hugeicons-plus-sign-circle')->label('New Transaction')->color('teal'),
+            CreateAction::make()
+                ->icon('hugeicons-plus-sign-circle')
+                ->label('New Transaction')
+                ->color('teal')
+                ->visible(fn () => auth()->user()->isAdmin()),
         ];
     }
 
