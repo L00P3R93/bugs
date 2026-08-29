@@ -16,6 +16,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
+use STS\FilamentImpersonate\Actions\Impersonate;
 
 class UsersTable
 {
@@ -121,6 +122,12 @@ class UsersTable
                 EditAction::make()->iconButton()->icon(Heroicon::OutlinedPencilSquare)->color('warning')->tooltip('Edit User'),
                 ViewAction::make()->iconButton()->icon(Heroicon::OutlinedEye)->color('primary')->tooltip('View User'),
                 DeleteAction::make()->iconButton()->icon(Heroicon::OutlinedTrash)->color('danger')->tooltip('Delete User'),
+                Impersonate::make()
+                    ->iconButton()
+                    ->icon('hugeicons-user-switch')
+                    ->color('indigo')
+                    ->tooltip('Impersonate User')
+                    ->redirectTo(url('/console')),
             ])
             ->groups([
                 Group::make('roles.name')->label('Role')->collapsible(),

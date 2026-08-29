@@ -14,6 +14,7 @@
         "filament/spatie-laravel-media-library-plugin": "~5.0",
         "flowframe/laravel-trend": "^0.4.0",
         "kirschbaum-development/commentions": "^0.7.10",
+        "lab404/laravel-impersonate": "^1.7",
         "laravel/fortify": "^1.30",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.0",
@@ -22,7 +23,8 @@
         "livewire/flux": "^2.9.0",
         "livewire/livewire": "^4.0",
         "opcodesio/log-viewer": "^3.23",
-        "spatie/laravel-permission": "^7.2"
+        "spatie/laravel-permission": "^7.2",
+        "stechstudio/filament-impersonate": "^5.6"
     },
     "require-dev": {
         "laravel/boost": "^2.1",
