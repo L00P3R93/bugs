@@ -65,6 +65,8 @@ class ProcessDailyPayouts extends Command
 
                 // Step 2: Fetch today's game count from KadiApi
                 $stats = KadiApi::getPlayerStats($tester->linked_id, $today);
+                // TODO: $stats array also contains 'games', 'tournament', and 'jackpots' keys with sub-arrays
+                // TODO: Implement targets and per game payouts for games, tournaments, and jackpots
                 $totalGames = (int) ($stats['total'] ?? 0);
 
                 // Step 3: Calculate new games since last check
