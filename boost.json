@@ -1,16 +1,26 @@
 {
     "agents": [
         "junie",
-        "claude_code"
+        "claude_code",
+        "opencode",
+        "cursor",
+        "codex"
     ],
+    "cloud": false,
     "guidelines": true,
-    "herd_mcp": false,
     "mcp": true,
+    "nightwatch": false,
+    "packages": [
+        "filament/filament"
+    ],
     "sail": false,
     "skills": [
+        "infer-conventions",
+        "fortify-development",
+        "laravel-best-practices",
+        "testing-best-practices",
         "fluxui-development",
         "livewire-development",
-        "pest-testing",
         "tailwindcss-development"
     ]
 }

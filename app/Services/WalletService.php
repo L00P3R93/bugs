@@ -4,72 +4,10 @@ namespace App\Services;
 
 use App\Enums\TransactionStatus;
 use App\Enums\TransactionType;
-use App\Jobs\ReleasePayoutJob;
-use App\Models\Transaction;
-use App\Models\TransactionLog;
 use App\Models\Wallet;
-use Illuminate\Support\Facades\DB;
 
 class WalletService
 {
-    /**
-     * Process a payout with 7-day holding period.
-     */
-    public function processPayout(Transaction $transaction): void
-    {
-        $wallet = $transaction->wallet;
-
-        // Hold payout for 7 days
-        $wallet->holdPayout($transaction->net_amount);
-
-        // Schedule release after 7 days
-        ReleasePayoutJob::dispatch($transaction)
-            ->delay(now()->addDays(7));
-
-        // Log processing
-        TransactionLog::create([
-            'transaction_id' => $transaction->id,
-            'action' => 'processing',
-            'previous_status' => TransactionStatus::PENDING->value,
-            'new_status' => TransactionStatus::PENDING->value,
-            'details' => [
-                'holding_until' => now()->addDays(7)->toDateTimeString(),
-            ],
-            'performed_by' => auth()->id(),
-        ]);
-    }
-
-    /**
-     * Release payout from pending to available balance.
-     */
-    public function releasePayout(Transaction $transaction): void
-    {
-        DB::transaction(function () use ($transaction): void {
-            $wallet = $transaction->wallet()->lockForUpdate()->first();
-
-            if ($transaction->status === TransactionStatus::PENDING) {
-                $wallet->releasePayout($transaction->net_amount);
-
-                $transaction->update([
-                    'status' => TransactionStatus::COMPLETED,
-                    'completed_at' => now(),
-                ]);
-
-                // Log release
-                TransactionLog::create([
-                    'transaction_id' => $transaction->id,
-                    'action' => 'completed',
-                    'previous_status' => TransactionStatus::PENDING->value,
-                    'new_status' => TransactionStatus::COMPLETED->value,
-                    'details' => [
-                        'amount_released' => $transaction->net_amount,
-                    ],
-                    'performed_by' => null, // System action
-                ]);
-            }
-        });
-    }
-
     /**
      * Calculate fee based on amount and payout method.
      */
@@ -96,6 +34,11 @@ class WalletService
 
         if ($wallet->available_balance < $amount) {
             $reasons[] = 'Insufficient available balance';
+        }
+
+        // Testers must reach daily target before withdrawing
+        if ($wallet->user->isTester() && ! $wallet->daily_target_reached) {
+            $reasons[] = 'Daily target of 30 games not reached';
         }
 
         // Check daily limit
@@ -148,6 +91,10 @@ class WalletService
             ->where('status', TransactionStatus::PENDING)
             ->count();
 
+        $pendingApprovalWithdrawals = $wallet->withdraws()
+            ->where('status', TransactionStatus::PENDING_APPROVAL)
+            ->count();
+
         $dailyWithdrawn = (float) $wallet->withdraws()
             ->where('status', TransactionStatus::COMPLETED)
             ->whereDate('created_at', now()->toDateString())
@@ -164,10 +111,14 @@ class WalletService
             'available_balance' => (float) $wallet->available_balance,
             'pending_balance' => (float) $wallet->pending_balance,
             'total_earned' => (float) $wallet->total_earned,
+            'daily_games_played' => $wallet->daily_games_played,
+            'daily_earned' => (float) $wallet->daily_earned,
+            'daily_target_reached' => $wallet->daily_target_reached,
             'completed_payouts' => $completedPayouts,
             'pending_payouts' => $pendingPayouts,
             'completed_withdrawals' => $completedWithdrawals,
             'pending_withdrawals' => $pendingWithdrawals,
+            'pending_approval_withdrawals' => $pendingApprovalWithdrawals,
             'daily_withdrawn' => $dailyWithdrawn,
             'monthly_withdrawn' => $monthlyWithdrawn,
             'daily_remaining' => max(0, $wallet->daily_withdrawal_limit - $dailyWithdrawn),

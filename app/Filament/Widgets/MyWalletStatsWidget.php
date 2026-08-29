@@ -38,15 +38,25 @@ class MyWalletStatsWidget extends BaseWidget
         $stats = $walletService->getStats($wallet);
 
         return [
+            Stat::make('Daily Progress', "{$stats['daily_games_played']}/30 games")
+                ->description($stats['daily_target_reached'] ? 'Target reached - withdrawals unlocked' : 'Reach 30 games to unlock withdrawals')
+                ->descriptionIcon($stats['daily_target_reached'] ? 'heroicon-m-check-circle' : 'heroicon-m-lock-closed')
+                ->color($stats['daily_target_reached'] ? 'success' : 'warning'),
+
             Stat::make('Available Balance', number_format($stats['available_balance'], 2))
                 ->description('Ready to withdraw')
                 ->descriptionIcon('heroicon-m-wallet')
                 ->color('success'),
 
             Stat::make('Pending Balance', number_format($stats['pending_balance'], 2))
-                ->description('7-day holding period')
+                ->description('Holding period')
                 ->descriptionIcon('heroicon-m-clock')
                 ->color('warning'),
+
+            Stat::make('Today\'s Earnings', number_format($stats['daily_earned'], 2))
+                ->description('Earned today')
+                ->descriptionIcon('heroicon-m-arrow-trending-up')
+                ->color('primary'),
 
             Stat::make('Total Earned', number_format($stats['total_earned'], 2))
                 ->description('Lifetime earnings')
@@ -62,6 +72,11 @@ class MyWalletStatsWidget extends BaseWidget
                 ->description('This month\'s withdrawal limit')
                 ->descriptionIcon('heroicon-m-calendar-days')
                 ->color('info'),
+
+            Stat::make('Pending Withdrawals', $stats['pending_approval_withdrawals'] + $stats['pending_withdrawals'])
+                ->description('Awaiting approval/processing')
+                ->descriptionIcon('heroicon-m-clock')
+                ->color('warning'),
 
             Stat::make('Total Transactions', number_format($stats['completed_payouts'] + $stats['completed_withdrawals']))
                 ->description('All-time completed')

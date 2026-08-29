@@ -3,10 +3,10 @@
 namespace App\Filament\Widgets;
 
 use App\Facades\KadiApi;
+use Filament\Notifications\Notification;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
-use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class MyKadiGamesPlayedStatsWidget extends BaseWidget
@@ -26,13 +26,27 @@ class MyKadiGamesPlayedStatsWidget extends BaseWidget
 
     protected function getStats(): array
     {
+        $apiError = false;
+
         try {
             $linkedId = auth()->user()?->linked_id;
-            $data = KadiApi::getPlayerStats($linkedId, today()->toDateString());
-        } catch (RequestException|ConnectionException $e) {
+            $data = Cache::remember('gms_player_games_stats', 120,
+                function () use ($linkedId) {
+                    return KadiApi::getPlayerStats($linkedId, today()->toDateString());
+                }
+            );
+        } catch (\Throwable $e) {
+            $apiError = true;
             Log::error("Kadi API player {$linkedId} stats failed", ['error' => $e->getMessage()]);
+            $data = [];
+        }
 
-            return [];
+        if ($apiError) {
+            Notification::make()
+                ->title('Game API Unavailable')
+                ->body('Could not connect to the wallet API. Stats shown may be incomplete.')
+                ->warning()
+                ->send();
         }
 
         return [

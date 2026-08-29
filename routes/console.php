@@ -1,6 +1,5 @@
 <?php
 
-use App\Jobs\ProcessPendingPayoutsJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
@@ -11,18 +10,12 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('payouts:process-daily')
-    ->dailyAt('00:05')
+    ->hourly()
     ->timezone('Africa/Nairobi')
     ->withoutOverlapping()
-    ->onFailure(fn () => Log::error('Daily payout job failed'));
+    ->onFailure(fn () => Log::error('Hourly payout job failed'));
 
 Schedule::command('withdrawals:process-pending')
     ->everyMinute()
     ->withoutOverlapping()
     ->onFailure(fn () => Log::channel('mpesa')->error('B2C processing job failed'));
-
-Schedule::job(new ProcessPendingPayoutsJob)
-    ->dailyAt('01:00')
-    ->timezone('Africa/Nairobi')
-    ->withoutOverlapping()
-    ->onFailure(fn () => Log::error('Process pending payouts job failed'));

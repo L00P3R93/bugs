@@ -181,6 +181,10 @@ class User extends Authenticatable implements Commenter, FilamentUser, HasAvatar
             'withdrawal_completed' => ['email' => true, 'database' => true],
             'withdrawal_failed' => ['email' => true, 'database' => true],
             'wallet_locked' => ['email' => true, 'database' => true],
+            'withdrawal_requested' => ['email' => true, 'database' => true],
+            'withdrawal_approved' => ['email' => true, 'database' => true],
+            'withdrawal_rejected' => ['email' => true, 'database' => true],
+            'daily_target_reached' => ['email' => true, 'database' => true],
         ];
     }
 

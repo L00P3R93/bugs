@@ -26,6 +26,10 @@ class Wallet extends Model
         'available_balance',
         'pending_balance',
         'total_earned',
+        'daily_games_played',
+        'daily_earned',
+        'daily_target_reached',
+        'last_daily_reset_at',
         'daily_withdrawal_limit',
         'monthly_withdrawal_limit',
         'status',
@@ -41,8 +45,12 @@ class Wallet extends Model
             'available_balance' => 'decimal:2',
             'pending_balance' => 'decimal:2',
             'total_earned' => 'decimal:2',
+            'daily_earned' => 'decimal:2',
             'daily_withdrawal_limit' => 'decimal:2',
             'monthly_withdrawal_limit' => 'decimal:2',
+            'daily_games_played' => 'integer',
+            'daily_target_reached' => 'boolean',
+            'last_daily_reset_at' => 'datetime',
             'status' => WalletStatus::class,
             'is_locked' => 'boolean',
             'locked_at' => 'datetime',
@@ -65,6 +73,38 @@ class Wallet extends Model
     }
 
     /**
+     * Check if the tester has reached the daily game target.
+     */
+    public function hasReachedDailyTarget(): bool
+    {
+        return $this->daily_target_reached;
+    }
+
+    /**
+     * Reset daily tracking counters.
+     */
+    public function resetDailyStats(): void
+    {
+        $this->update([
+            'daily_games_played' => 0,
+            'daily_earned' => 0,
+            'daily_target_reached' => false,
+            'last_daily_reset_at' => now(),
+        ]);
+    }
+
+    /**
+     * Reset balance to zero for testers who missed the daily target.
+     */
+    public function resetDailyBalance(): void
+    {
+        $this->update([
+            'balance' => 0,
+            'available_balance' => 0,
+        ]);
+    }
+
+    /**
      * Check if the wallet can withdraw a given amount.
      */
     public function canWithdraw(float $amount): bool
@@ -74,6 +114,11 @@ class Wallet extends Model
         }
 
         if ($this->available_balance < $amount) {
+            return false;
+        }
+
+        // Testers must reach daily target before withdrawing
+        if ($this->user->isTester() && ! $this->daily_target_reached) {
             return false;
         }
 
@@ -99,24 +144,6 @@ class Wallet extends Model
         }
 
         return true;
-    }
-
-    /**
-     * Hold payout for 7-day pending period.
-     */
-    public function holdPayout(float $amount): void
-    {
-        $this->increment('pending_balance', $amount);
-    }
-
-    /**
-     * Release payout from pending to available balance.
-     */
-    public function releasePayout(float $amount): void
-    {
-        $this->decrement('pending_balance', $amount);
-        $this->increment('available_balance', $amount);
-        $this->increment('total_earned', $amount);
     }
 
     /**

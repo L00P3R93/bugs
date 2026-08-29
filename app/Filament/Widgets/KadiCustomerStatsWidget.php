@@ -21,7 +21,7 @@ class KadiCustomerStatsWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return auth()->user()?->isSuperAdmin() ?? false;
+        return /* auth()->user()?->isSuperAdmin() ?? */ false;
     }
 
     protected function getStats(): array

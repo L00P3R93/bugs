@@ -7,7 +7,8 @@ use App\Enums\TransactionType;
 use App\Models\Transaction;
 use App\Models\TransactionLog;
 use App\Models\Withdraw;
-use Illuminate\Support\Facades\DB;
+use App\Notifications\WithdrawalRequestedNotification;
+use App\Services\AdminNotificationRouter;
 
 class TransactionObserver
 {
@@ -39,13 +40,16 @@ class TransactionObserver
             $transaction->currency = 'KES';
         }
 
-        $transaction->status = TransactionStatus::PENDING;
-
+        // WITHDRAW requests go to pending_approval for admin review
         if ($transaction->type === TransactionType::WITHDRAW) {
+            $transaction->status = TransactionStatus::PENDING_APPROVAL;
+
             $wallet = $transaction->wallet;
             if ($wallet->balance < $transaction->amount) {
                 throw new \Exception('Insufficient balance');
             }
+        } else {
+            $transaction->status = TransactionStatus::PENDING;
         }
     }
 
@@ -69,48 +73,23 @@ class TransactionObserver
             'performed_by' => auth()->id(),
         ]);
 
-        try {
-            DB::transaction(function () use ($transaction): void {
-                $wallet = $transaction->wallet()->lockForUpdate()->first();
+        // PAYOUT transactions are handled directly by ProcessDailyPayouts command
+        // WITHDRAW transactions: create Withdraw record in pending_approval state
+        if ($transaction->type === TransactionType::WITHDRAW) {
+            $wallet = $transaction->wallet;
+            $user = $wallet->user;
 
-                if ($transaction->type === TransactionType::PAYOUT) {
-                    // Hold payout for 7-day pending period
-                    $wallet->holdPayout($transaction->net_amount);
-                    $transaction->status = TransactionStatus::PENDING;
-                    $transaction->saveQuietly();
-                } elseif ($transaction->type === TransactionType::WITHDRAW) {
-                    if ($wallet->balance < $transaction->amount) {
-                        throw new \Exception('Insufficient balance');
-                    }
-                    $wallet->decrement('balance', $transaction->amount);
-                    $wallet->decrement('available_balance', $transaction->amount);
-                    $user = $wallet->user;
-                    Withdraw::query()->create([
-                        'transaction_id' => $transaction->id,
-                        'wallet_id' => $wallet->id,
-                        'phone' => $user->phone,
-                        'amount' => $transaction->amount,
-                        'balance' => $wallet->balance,
-                    ]);
-                    // Transaction stays PENDING until B2C callback confirms the transfer
-                }
-            });
-        } catch (\Exception $e) {
-            $transaction->status = TransactionStatus::FAILED;
-            $transaction->cancelled_at = now();
-            $transaction->saveQuietly();
-
-            // Log failure
-            TransactionLog::create([
+            $withdraw = Withdraw::query()->create([
                 'transaction_id' => $transaction->id,
-                'action' => 'failed',
-                'previous_status' => TransactionStatus::PENDING->value,
-                'new_status' => TransactionStatus::FAILED->value,
-                'details' => ['error' => $e->getMessage()],
-                'performed_by' => auth()->id(),
+                'wallet_id' => $wallet->id,
+                'phone' => $user->phone,
+                'amount' => $transaction->amount,
+                'balance' => $wallet->balance,
+                'status' => TransactionStatus::PENDING_APPROVAL,
             ]);
 
-            throw $e;
+            // Notify admins of new withdrawal request
+            AdminNotificationRouter::notifyAdmins(new WithdrawalRequestedNotification($withdraw));
         }
     }
 

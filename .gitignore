@@ -23,3 +23,9 @@ yarn-error.log
 /.zed
 
 /plans
+/.agents
+/.claude
+/.codex
+/.cursor
+/.junie
+
