@@ -28,11 +28,13 @@
                             <a href="{{ route('login') }}" class="rounded px-4 py-1.5 text-sm font-medium text-zinc-400 transition hover:text-white">
                                 Log in
                             </a>
+                        {{--
                             @if (Route::has('register'))
                                 <a href="{{ route('register') }}" class="rounded px-4 py-1.5 text-sm font-medium text-zinc-900 bg-white transition hover:bg-zinc-100">
                                     Get started
                                 </a>
                             @endif
+                        --}}
                         @endauth
                     </nav>
                 </header>
@@ -62,11 +64,13 @@
                 {{-- CTAs --}}
                 @guest
                     <div class="flex flex-col items-center gap-3 sm:flex-row">
-                        @if (Route::has('register'))
+                        {{--
+                         @if (Route::has('register'))
                             <a href="{{ route('register') }}" class="inline-flex items-center justify-center rounded-md bg-white px-6 py-2.5 text-sm font-medium text-zinc-900 shadow-sm transition hover:bg-zinc-100">
                                 Create an account
                             </a>
                         @endif
+                         --}}
                         <a href="{{ route('login') }}" class="inline-flex items-center justify-center rounded-md px-6 py-2.5 text-sm font-medium text-zinc-400 ring-1 ring-zinc-800 transition hover:bg-zinc-900 hover:text-white">
                             Log in
                         </a>
