@@ -3,7 +3,6 @@
 namespace App\Filament\Pages;
 
 use App\Facades\KadiApi;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
@@ -12,6 +11,7 @@ use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -62,7 +62,7 @@ class EditProfilePage extends Page implements HasForms
             ->components([
                 Tabs::make()
                     ->tabs([
-                        Tab::make('Kadi Account')
+                        /*Tab::make('Kadi Account')
                             ->icon(Heroicon::OutlinedLink)
                             ->schema([
                                 Section::make('Link Your Kadi Play Account')
@@ -114,7 +114,7 @@ class EditProfilePage extends Page implements HasForms
                                             })
                                             ->columnSpanFull(),
                                     ]),
-                            ]),
+                            ]),*/
 
                         Tab::make('Profile')
                             ->icon(Heroicon::OutlinedUser)
