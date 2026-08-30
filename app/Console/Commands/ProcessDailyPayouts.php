@@ -7,6 +7,7 @@ use App\Enums\TransactionType;
 use App\Facades\KadiApi;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\Wallet;
 use App\Notifications\DailyPayoutsSummaryNotification;
 use App\Notifications\DailyTargetReachedNotification;
 use App\Services\AdminNotificationRouter;
@@ -112,7 +113,7 @@ class ProcessDailyPayouts extends Command
                 $totalEarnings = $gamesEarnings + $tournamentEarnings + $jackpotEarnings;
 
                 DB::transaction(function () use ($jackpotEarnings, $tournamentEarnings, $gamesEarnings, $wallet, $tester, $totalEarnings, $totalNewGames, $gamesDelta, $tournamentDelta, $jackpotDelta, $current, $today, &$paid, &$paidDetails, &$totalAmount) {
-                    $wallet = $wallet->lockForUpdate()->first();
+                    $wallet = Wallet::query()->where('id', $wallet->id)->lockForUpdate()->first();
 
                     $transaction = Transaction::query()->create([
                         'wallet_id' => $wallet->id,
