@@ -122,7 +122,7 @@ class TransactionInfolist
                         ->schema([
                             TextEntry::make('user.name')
                                 ->label('Name')
-                                ->icon('hugeicons-user-01')
+                                ->icon('hugeicons-user-account')
                                 ->iconColor('primary'),
                             TextEntry::make('user.email')
                                 ->label('Email')
