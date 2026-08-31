@@ -63,7 +63,7 @@ class MpesaBalanceStatsWidget extends BaseWidget
 
     private function getBalanceColor(?MpesaAccountBalance $balance, CarbonInterface $stale): string
     {
-        if (! $balance || $balance->fetched_at->before($stale)) {
+        if (! $balance || $balance->fetched_at->isBefore($stale)) {
             return 'warning';
         }
 
