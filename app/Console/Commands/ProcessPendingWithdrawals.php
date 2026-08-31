@@ -3,11 +3,12 @@
 namespace App\Console\Commands;
 
 use App\Enums\TransactionStatus;
+use App\Exceptions\MpesaApiException;
 use App\Models\Withdraw;
-use App\Mpesa\Init as MPESA;
 use App\Notifications\WithdrawalFailedNotification;
 use App\Notifications\WithdrawalsSummaryNotification;
 use App\Services\AdminNotificationRouter;
+use App\Services\MpesaService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -17,6 +18,12 @@ class ProcessPendingWithdrawals extends Command
     protected $signature = 'withdrawals:process-pending';
 
     protected $description = 'Process one pending withdrawal per minute via M-Pesa B2C';
+
+    public function __construct(
+        private readonly MpesaService $mpesa,
+    ) {
+        parent::__construct();
+    }
 
     /**
      * @throws \Throwable
@@ -56,14 +63,13 @@ class ProcessPendingWithdrawals extends Command
                 'Remarks' => 'Withdrawal '.$withdraw->transaction->transaction_no,
                 'Occasion' => '',
             ];
-            $responseJson = MPESA::b2c($userParams);
 
-            $response = json_decode($responseJson, true);
-
-            if (! is_array($response)) {
-                Log::channel('mpesa')->error("B2C invalid response for withdrawal {$withdraw->id}: {$responseJson}");
+            try {
+                $response = $this->mpesa->b2c($userParams);
+            } catch (MpesaApiException $e) {
+                Log::channel('mpesa')->error("B2C request failed for withdrawal {$withdraw->id}: {$e->getMessage()}");
                 $withdraw->status = TransactionStatus::FAILED;
-                $withdraw->failure_reason = 'Invalid API response';
+                $withdraw->failure_reason = $e->getMessage();
                 $withdraw->saveQuietly();
 
                 $failedCount++;
@@ -72,10 +78,9 @@ class ProcessPendingWithdrawals extends Command
                     'phone' => $withdraw->phone,
                     'amount' => $withdraw->amount,
                     'status' => 'failed',
-                    'reason' => 'Invalid API response',
+                    'reason' => $e->getMessage(),
                 ];
 
-                // Notify user of failure
                 $withdraw->wallet->user->notify(
                     new WithdrawalFailedNotification($withdraw)
                 );
@@ -112,7 +117,6 @@ class ProcessPendingWithdrawals extends Command
                     'reason' => $withdraw->response_message,
                 ];
 
-                // Notify user of failure
                 $withdraw->wallet->user->notify(
                     new WithdrawalFailedNotification($withdraw)
                 );
