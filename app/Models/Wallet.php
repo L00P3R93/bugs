@@ -29,6 +29,11 @@ class Wallet extends Model
         'daily_games_played',
         'daily_earned',
         'daily_target_reached',
+        'daily_2p_games_target_reached',
+        'daily_3p_games_target_reached',
+        'daily_4p_games_target_reached',
+        'daily_tournament_target_reached',
+        'daily_jackpot_target_reached',
         'last_daily_reset_at',
         'daily_stats_snapshot',
         'daily_withdrawal_limit',
@@ -51,6 +56,11 @@ class Wallet extends Model
             'monthly_withdrawal_limit' => 'decimal:2',
             'daily_games_played' => 'integer',
             'daily_target_reached' => 'boolean',
+            'daily_2p_games_target_reached' => 'boolean',
+            'daily_3p_games_target_reached' => 'boolean',
+            'daily_4p_games_target_reached' => 'boolean',
+            'daily_tournament_target_reached' => 'boolean',
+            'daily_jackpot_target_reached' => 'boolean',
             'last_daily_reset_at' => 'datetime',
             'daily_stats_snapshot' => 'array',
             'status' => WalletStatus::class,
@@ -77,9 +87,16 @@ class Wallet extends Model
     /**
      * Check if the tester has reached the daily game target.
      */
-    public function hasReachedDailyTarget(): bool
+    public function hasReachedDailyTarget(?string $category = null): bool
     {
-        return $this->daily_target_reached;
+        return match ($category) {
+            '2p_games' => $this->daily_2p_games_target_reached,
+            '3p_games' => $this->daily_3p_games_target_reached,
+            '4p_games' => $this->daily_4p_games_target_reached,
+            'tournament' => $this->daily_tournament_target_reached,
+            'jackpot' => $this->daily_jackpot_target_reached,
+            default => $this->daily_target_reached,
+        };
     }
 
     /**
@@ -91,6 +108,11 @@ class Wallet extends Model
             'daily_games_played' => 0,
             'daily_earned' => 0,
             'daily_target_reached' => false,
+            'daily_2p_games_target_reached' => false,
+            'daily_3p_games_target_reached' => false,
+            'daily_4p_games_target_reached' => false,
+            'daily_tournament_target_reached' => false,
+            'daily_jackpot_target_reached' => false,
             'last_daily_reset_at' => now(),
             'daily_stats_snapshot' => null,
         ]);

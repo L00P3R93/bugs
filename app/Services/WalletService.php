@@ -106,6 +106,8 @@ class WalletService
             ->whereYear('created_at', now()->year)
             ->sum('amount');
 
+        $snapshot = $wallet->daily_stats_snapshot ?? [];
+
         return [
             'balance' => (float) $wallet->balance,
             'available_balance' => (float) $wallet->available_balance,
@@ -114,6 +116,12 @@ class WalletService
             'daily_games_played' => $wallet->daily_games_played,
             'daily_earned' => (float) $wallet->daily_earned,
             'daily_target_reached' => $wallet->daily_target_reached,
+            'daily_2p_games_target_reached' => $wallet->daily_2p_games_target_reached,
+            'daily_3p_games_target_reached' => $wallet->daily_3p_games_target_reached,
+            'daily_4p_games_target_reached' => $wallet->daily_4p_games_target_reached,
+            'daily_tournament_target_reached' => $wallet->daily_tournament_target_reached,
+            'daily_jackpot_target_reached' => $wallet->daily_jackpot_target_reached,
+            'daily_stats_snapshot' => $snapshot,
             'completed_payouts' => $completedPayouts,
             'pending_payouts' => $pendingPayouts,
             'completed_withdrawals' => $completedWithdrawals,

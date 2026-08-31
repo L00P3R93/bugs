@@ -77,10 +77,17 @@ class ProcessDailyPayouts extends Command
 
                 // Step 1: Midnight reset — if last reset was not today, reset daily stats
                 if ($wallet->last_daily_reset_at === null || $wallet->last_daily_reset_at->toDateString() !== $today) {
-                    if (! $wallet->daily_target_reached && $wallet->daily_games_played > 0) {
+                    $anyTargetMet = $wallet->daily_target_reached
+                        || $wallet->daily_2p_games_target_reached
+                        || $wallet->daily_3p_games_target_reached
+                        || $wallet->daily_4p_games_target_reached
+                        || $wallet->daily_tournament_target_reached
+                        || $wallet->daily_jackpot_target_reached;
+
+                    if (! $anyTargetMet && $wallet->daily_games_played > 0) {
                         $wallet->resetDailyBalance();
-                        $this->line("Reset balance for tester {$tester->id} ({$tester->name}) — target not reached yesterday.");
-                        Log::info("Daily reset: tester {$tester->id} balance zeroed — daily target not reached.");
+                        $this->line("Reset balance for tester {$tester->id} ({$tester->name}) — no targets met yesterday.");
+                        Log::info("Daily reset: tester {$tester->id} balance zeroed — no daily targets reached.");
                     }
                     $wallet->resetDailyStats();
                     $reset++;
@@ -153,18 +160,42 @@ class ProcessDailyPayouts extends Command
                 $tournamentTotal = $current['tournament']['total'] ?? 0;
                 $jackpotTotal = $current['jackpots']['total'] ?? 0;
 
-                $gamesTargetMet = $gamesTotal >= self::GAME_TARGETS['2_players']
-                    || $gamesTotal >= self::GAME_TARGETS['3_players']
-                    || $gamesTotal >= self::GAME_TARGETS['4_players'];
-                $tournamentTargetMet = $tournamentTotal >= self::TOURNAMENT_TARGET;
-                $jackpotTargetMet = $jackpotTotal >= self::JACKPOT_TARGET;
+                $games2pMet = ($current['games']['2_players'] ?? 0) >= self::GAME_TARGETS['2_players'];
+                $games3pMet = ($current['games']['3_players'] ?? 0) >= self::GAME_TARGETS['3_players'];
+                $games4pMet = ($current['games']['4_players'] ?? 0) >= self::GAME_TARGETS['4_players'];
+                $tournamentMet = $tournamentTotal >= self::TOURNAMENT_TARGET;
+                $jackpotMet = $jackpotTotal >= self::JACKPOT_TARGET;
 
-                if (($gamesTargetMet || $tournamentTargetMet || $jackpotTargetMet) && ! $wallet->daily_target_reached) {
-                    $wallet->update(['daily_target_reached' => true]);
+                $updates = [];
+
+                if ($games2pMet && ! $wallet->daily_2p_games_target_reached) {
+                    $updates['daily_2p_games_target_reached'] = true;
+                }
+                if ($games3pMet && ! $wallet->daily_3p_games_target_reached) {
+                    $updates['daily_3p_games_target_reached'] = true;
+                }
+                if ($games4pMet && ! $wallet->daily_4p_games_target_reached) {
+                    $updates['daily_4p_games_target_reached'] = true;
+                }
+                if ($tournamentMet && ! $wallet->daily_tournament_target_reached) {
+                    $updates['daily_tournament_target_reached'] = true;
+                }
+                if ($jackpotMet && ! $wallet->daily_jackpot_target_reached) {
+                    $updates['daily_jackpot_target_reached'] = true;
+                }
+
+                $anyNewlyMet = count($updates) > 0;
+
+                if ($anyNewlyMet && ! $wallet->daily_target_reached) {
+                    $updates['daily_target_reached'] = true;
+                }
+
+                if ($anyNewlyMet) {
+                    $wallet->update($updates);
                     $this->line("Tester {$tester->id} ({$tester->name}) reached daily target! Withdrawals unlocked.");
-                    Log::info("Daily target reached: tester {$tester->id} — games: {$gamesTotal}, tournaments: {$tournamentTotal}, jackpots: {$jackpotTotal}.");
+                    Log::info("Daily target reached: tester {$tester->id} — 2p: {$games2pMet}, 3p: {$games3pMet}, 4p: {$games4pMet}, tournament: {$tournamentMet}, jackpot: {$jackpotMet}.");
 
-                    $tester->notify(new DailyTargetReachedNotification($wallet));
+                    $tester->notify(new DailyTargetReachedNotification($wallet, array_keys($updates)));
                 }
 
             } catch (RequestException|ConnectionException $e) {

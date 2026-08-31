@@ -16,6 +16,16 @@ class MyWalletStatsWidget extends BaseWidget
 
     protected ?string $heading = 'Bugs Wallet & Transactions Summary';
 
+    private const GAME_TARGETS = [
+        '2_players' => 40,
+        '3_players' => 29,
+        '4_players' => 23,
+    ];
+
+    private const TOURNAMENT_TARGET = 3;
+
+    private const JACKPOT_TARGET = 3;
+
     public static function canView(): bool
     {
         return auth()->user()?->hasAnyRole(['Tester']) ?? false;
@@ -36,10 +46,47 @@ class MyWalletStatsWidget extends BaseWidget
 
         $walletService = app(WalletService::class);
         $stats = $walletService->getStats($wallet);
+        $snapshot = $stats['daily_stats_snapshot'];
 
         return [
-            Stat::make('Daily Progress', "{$stats['daily_games_played']}/30 games")
-                ->description($stats['daily_target_reached'] ? 'Target reached - withdrawals unlocked' : 'Reach 30 games to unlock withdrawals')
+            $this->makeTargetStat(
+                '2 Player Games',
+                $snapshot['games']['2_players'] ?? 0,
+                self::GAME_TARGETS['2_players'],
+                $stats['daily_2p_games_target_reached'],
+                'heroicon-m-users'
+            ),
+            $this->makeTargetStat(
+                '3 Player Games',
+                $snapshot['games']['3_players'] ?? 0,
+                self::GAME_TARGETS['3_players'],
+                $stats['daily_3p_games_target_reached'],
+                'heroicon-m-users'
+            ),
+            $this->makeTargetStat(
+                '4 Player Games',
+                $snapshot['games']['4_players'] ?? 0,
+                self::GAME_TARGETS['4_players'],
+                $stats['daily_4p_games_target_reached'],
+                'heroicon-m-users'
+            ),
+            $this->makeTargetStat(
+                'Tournaments',
+                $snapshot['tournament']['total'] ?? 0,
+                self::TOURNAMENT_TARGET,
+                $stats['daily_tournament_target_reached'],
+                'heroicon-m-trophy'
+            ),
+            $this->makeTargetStat(
+                'Jackpots',
+                $snapshot['jackpots']['total'] ?? 0,
+                self::JACKPOT_TARGET,
+                $stats['daily_jackpot_target_reached'],
+                'heroicon-m-currency-dollar'
+            ),
+
+            Stat::make('Withdrawal Status', $stats['daily_target_reached'] ? 'Unlocked' : 'Locked')
+                ->description($stats['daily_target_reached'] ? 'You can withdraw now' : 'Reach any target to unlock')
                 ->descriptionIcon($stats['daily_target_reached'] ? 'heroicon-m-check-circle' : 'heroicon-m-lock-closed')
                 ->color($stats['daily_target_reached'] ? 'success' : 'warning'),
 
@@ -78,5 +125,13 @@ class MyWalletStatsWidget extends BaseWidget
                 ->descriptionIcon('heroicon-m-arrows-right-left')
                 ->color('gray'),
         ];
+    }
+
+    private function makeTargetStat(string $label, int $current, int $target, bool $met, string $icon): Stat
+    {
+        return Stat::make($label, "{$current}/{$target}")
+            ->description($met ? 'Target reached' : ($target - $current).' more to go')
+            ->descriptionIcon($met ? 'heroicon-m-check-circle' : $icon)
+            ->color($met ? 'success' : 'warning');
     }
 }

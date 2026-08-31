@@ -17,7 +17,7 @@ class ActiveTestersTableWidget extends BaseWidget
 
     protected static ?int $sort = 6;
 
-    protected ?string $pollingInterval = null;
+    protected ?string $pollingInterval = '1h';
 
     public static function canView(): bool
     {
@@ -30,17 +30,16 @@ class ActiveTestersTableWidget extends BaseWidget
             ->query(
                 User::query()
                     ->role('Tester')
+                    ->leftJoin('wallets', 'wallets.user_id', '=', 'users.id')
                     ->withCount([
                         'bugs as total_bugs_count',
-                        'bugs as paid_bugs_count' => fn ($q) => $q->where('status', BugStatus::PAID),
-                        'bugs as fixed_bugs_count' => fn ($q) => $q->where('status', BugStatus::FIXED),
-                        'bugs as rejected_bugs_count' => fn ($q) => $q->whereIn('status', [BugStatus::REJECTED, BugStatus::WONT_FIX, BugStatus::DUPLICATE]),
                     ])
                     ->withSum(
-                        ['bugs as total_earned' => fn ($q) => $q->where('status', BugStatus::PAID)],
+                        ['bugs as total_bug_earned' => fn ($q) => $q->where('status', BugStatus::PAID)],
                         'final_amount'
                     )
-                    ->orderByDesc('total_bugs_count')
+                    ->selectRaw('users.*, wallets.daily_games_played, wallets.total_earned as wallet_total_earned')
+                    ->orderByDesc('wallet_total_earned')
             )
             ->columns([
                 Tables\Columns\TextColumn::make('name')
@@ -50,37 +49,21 @@ class ActiveTestersTableWidget extends BaseWidget
                     ->weight(FontWeight::SemiBold)
                     ->description(fn (User $record): string => '@'.($record->username ?? $record->account_no)),
 
-                Tables\Columns\TextColumn::make('account_no')
-                    ->label('Account No')
-                    ->searchable()
-                    ->copyable(),
-
                 Tables\Columns\TextColumn::make('total_bugs_count')
                     ->label('Total Bugs')
                     ->sortable()
                     ->badge()
                     ->color('primary'),
 
-                Tables\Columns\TextColumn::make('paid_bugs_count')
-                    ->label('Paid')
+                Tables\Columns\TextColumn::make('daily_games_played')
+                    ->label('Total Played')
                     ->sortable()
                     ->badge()
-                    ->color('success'),
+                    ->color('info')
+                    ->default(0),
 
-                Tables\Columns\TextColumn::make('fixed_bugs_count')
-                    ->label('Fixed')
-                    ->sortable()
-                    ->badge()
-                    ->color('info'),
-
-                Tables\Columns\TextColumn::make('rejected_bugs_count')
-                    ->label('Invalid')
-                    ->sortable()
-                    ->badge()
-                    ->color('danger'),
-
-                Tables\Columns\TextColumn::make('total_earned')
-                    ->label('Total Earned')
+                Tables\Columns\TextColumn::make('wallet_total_earned')
+                    ->label('Wallet Earned')
                     ->sortable()
                     ->numeric(decimalPlaces: 2)
                     ->prefix('KES ')
@@ -91,7 +74,7 @@ class ActiveTestersTableWidget extends BaseWidget
                     ->date()
                     ->sortable(),
             ])
-            ->defaultSort('total_bugs_count', 'desc')
+            ->defaultSort('wallet_total_earned', 'desc')
             ->paginated([10, 25, 50])
             ->defaultPaginationPageOption(10);
     }
