@@ -63,6 +63,7 @@ class ProcessDailyPayouts extends Command
         $reset = 0;
         $paidDetails = [];
         $totalAmount = 0;
+        $targetsReached = [];
 
         foreach ($testers as $tester) {
             if (! $tester->wallet) {
@@ -195,6 +196,25 @@ class ProcessDailyPayouts extends Command
                     $this->line("Tester {$tester->id} ({$tester->name}) reached daily target! Withdrawals unlocked.");
                     Log::info("Daily target reached: tester {$tester->id} — 2p: {$games2pMet}, 3p: {$games3pMet}, 4p: {$games4pMet}, tournament: {$tournamentMet}, jackpot: {$jackpotMet}.");
 
+                    $targetLabels = collect(array_keys($updates))
+                        ->filter(fn ($key) => $key !== 'daily_target_reached')
+                        ->map(fn ($key) => match ($key) {
+                            'daily_2p_games_target_reached' => '2 Player Games',
+                            'daily_3p_games_target_reached' => '3 Player Games',
+                            'daily_4p_games_target_reached' => '4 Player Games',
+                            'daily_tournament_target_reached' => 'Tournaments',
+                            'daily_jackpot_target_reached' => 'Jackpots',
+                            default => $key,
+                        })
+                        ->values()
+                        ->all();
+
+                    $targetsReached[] = [
+                        'name' => $tester->name,
+                        'email' => $tester->email,
+                        'targets' => $targetLabels,
+                    ];
+
                     $tester->notify(new DailyTargetReachedNotification($wallet, array_keys($updates)));
                 }
 
@@ -205,9 +225,9 @@ class ProcessDailyPayouts extends Command
             }
         }
 
-        $this->info("Done. Paid: {$paid}, Skipped: {$skipped}, Resets: {$reset}, Errors: {$errors}.");
+        $this->info("Done. Paid: {$paid}, Skipped: {$skipped}, Resets: {$reset}, Errors: {$errors}, Targets reached: ".count($targetsReached).'.');
 
-        if ($paid > 0 || $errors > 0) {
+        if (count($targetsReached) > 0) {
             $notification = new DailyPayoutsSummaryNotification(
                 date: $today,
                 totalTesters: $testers->count(),
@@ -215,7 +235,8 @@ class ProcessDailyPayouts extends Command
                 skippedCount: $skipped,
                 errorCount: $errors,
                 totalAmount: $totalAmount,
-                paidDetails: $paidDetails
+                paidDetails: $paidDetails,
+                targetsReached: $targetsReached,
             );
 
             AdminNotificationRouter::notifyAdmins($notification);

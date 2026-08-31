@@ -24,37 +24,69 @@ class TransactionsTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['wallet.user', 'bug']))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['wallet.user', 'bug', 'user']))
             ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('transaction_no')
-                    ->searchable(),
-                TextColumn::make('wallet.wallet_no')
+                    ->label('Transaction')
                     ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->weight('bold'),
+
+                TextColumn::make('user.name')
+                    ->label('Owner')
+                    ->searchable()
+                    ->description(fn ($record) => $record->wallet?->wallet_no ?? '-'),
+
                 TextColumn::make('bug.title')
-                    ->searchable(),
+                    ->label('Bug')
+                    ->searchable()
+                    ->placeholder('-')
+                    ->limit(30),
+
+                TextColumn::make('source')
+                    ->label('Source')
+                    ->state(function ($record): string {
+                        if ($record->bug_id) {
+                            return 'Bug Bounty';
+                        }
+
+                        return match ($record->type) {
+                            TransactionType::PAYOUT => 'Games Played',
+                            TransactionType::WITHDRAW => 'Withdrawal',
+                            default => '-',
+                        };
+                    })
+                    ->badge()
+                    ->color(function ($record): string {
+                        if ($record->bug_id) {
+                            return 'success';
+                        }
+
+                        return match ($record->type) {
+                            TransactionType::PAYOUT => 'info',
+                            TransactionType::WITHDRAW => 'warning',
+                            default => 'gray',
+                        };
+                    }),
+
                 TextColumn::make('amount')
-                    ->numeric()
+                    ->label('Amount')
+                    ->numeric(decimalPlaces: 2)
+                    ->prefix('KES ')
                     ->sortable(),
+
                 TextColumn::make('type')
                     ->badge()
                     ->searchable(),
+
                 TextColumn::make('status')
                     ->badge()
                     ->searchable(),
+
                 TextColumn::make('created_at')
+                    ->label('Created')
                     ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('deleted_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
             ])
             ->filters([
                 SelectFilter::make('type')

@@ -12,7 +12,8 @@ class DailyPayoutsSummaryNotification extends Notification implements ShouldQueu
     use Queueable;
 
     /**
-     * Create a new notification instance.
+     * @param  array<int, array{name: string, email: string, targets: array<int, string>}>  $targetsReached
+     * @param  array<int, array{name: string, email: string, amount: float, games: int, total_games: int}>  $paidDetails
      */
     public function __construct(
         public string $date,
@@ -22,13 +23,9 @@ class DailyPayoutsSummaryNotification extends Notification implements ShouldQueu
         public int $errorCount,
         public float $totalAmount,
         public array $paidDetails,
+        public array $targetsReached = [],
     ) {}
 
-    /**
-     * Get the notification's delivery channels.
-     *
-     * @return array<int, string>
-     */
     public function via(object $notifiable): array
     {
         $channels = [];
@@ -44,28 +41,31 @@ class DailyPayoutsSummaryNotification extends Notification implements ShouldQueu
         return $channels;
     }
 
-    /**
-     * Get the mail representation of the notification.
-     */
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
-            ->subject("Daily Payouts Summary - {$this->date}")
-            ->greeting("Daily Payouts Report for {$this->date}")
-            ->line("Total testers processed: {$this->totalTesters}")
-            ->line("Successfully paid: {$this->paidCount}")
-            ->line("Skipped: {$this->skippedCount}")
-            ->line("Errors: {$this->errorCount}")
-            ->line('Total amount disbursed: KES '.number_format($this->totalAmount, 2))
-            ->action('View Transactions', url('/admin/transactions'))
-            ->line('Thank you for using our platform!');
+        $mail = (new MailMessage)
+            ->subject("Daily Target Reached — {$this->date}")
+            ->greeting("Targets Reached on {$this->date}")
+            ->line(count($this->targetsReached).' tester(s) reached their daily target(s).');
+
+        foreach ($this->targetsReached as $entry) {
+            $targets = implode(', ', $entry['targets']);
+            $mail->line("• {$entry['name']} — {$targets}");
+        }
+
+        if ($this->paidCount > 0) {
+            $mail->line('')
+                ->line("Payouts processed: {$this->paidCount} (KES ".number_format($this->totalAmount, 2).')');
+        }
+
+        if ($this->errorCount > 0) {
+            $mail->line("Errors: {$this->errorCount}");
+        }
+
+        return $mail
+            ->action('View Dashboard', url('/console'));
     }
 
-    /**
-     * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(object $notifiable): array
     {
         return [
@@ -77,7 +77,8 @@ class DailyPayoutsSummaryNotification extends Notification implements ShouldQueu
             'error_count' => $this->errorCount,
             'total_amount' => $this->totalAmount,
             'paid_details' => $this->paidDetails,
-            'icon' => 'heroicon-o-currency-dollar',
+            'targets_reached' => $this->targetsReached,
+            'icon' => 'heroicon-o-trophy',
             'color' => 'success',
         ];
     }
