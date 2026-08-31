@@ -24,6 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             '/result',
             '/timeout',
+            '/b2c/balance/result',
+            '/b2c/balance/timeout',
+            '/c2b/balance/result',
+            '/c2b/balance/timeout',
         ]);
 
         $middleware->alias([

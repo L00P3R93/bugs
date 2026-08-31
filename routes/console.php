@@ -22,5 +22,6 @@ Schedule::command('withdrawals:process-pending')
 
 Schedule::command('mpesa:fetch-balances')
     ->hourly()
+    ->timezone('Africa/Nairobi')
     ->withoutOverlapping()
     ->onFailure(fn () => Log::channel('mpesa')->error('M-Pesa balance fetch job failed'));
