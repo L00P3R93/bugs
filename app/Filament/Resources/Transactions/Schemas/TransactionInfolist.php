@@ -114,8 +114,7 @@ class TransactionInfolist
                                 ->label('Payout Method')
                                 ->icon('hugeicons-money-exchange-02')
                                 ->iconColor('primary')
-                                ->placeholder('—')
-                                ->ucfirst(),
+                                ->placeholder('—'),
                         ])->columns(1),
 
                     Section::make('Owner')
