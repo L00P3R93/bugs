@@ -19,3 +19,8 @@ Schedule::command('withdrawals:process-pending')
     ->everyMinute()
     ->withoutOverlapping()
     ->onFailure(fn () => Log::channel('mpesa')->error('B2C processing job failed'));
+
+Schedule::command('mpesa:fetch-balances')
+    ->hourly()
+    ->withoutOverlapping()
+    ->onFailure(fn () => Log::channel('mpesa')->error('M-Pesa balance fetch job failed'));

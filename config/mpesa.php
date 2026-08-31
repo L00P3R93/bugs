@@ -110,8 +110,8 @@ return [
      * *************************************************************************************************************
      */
     'account_balance_b2c' => [
-        'timeout_url' => '',
-        'result_url' => '',
+        'timeout_url' => env('MPESA_B2C_TIMEOUT_BALANCE_URL'),
+        'result_url' => env('MPESA_B2C_RESULT_BALANCE_URL'),
     ],
 
     /*
@@ -119,7 +119,7 @@ return [
      * *************************************************************************************************************
      */
     'account_balance_c2b' => [
-        'timeout_url' => '',
-        'result_url' => '',
+        'timeout_url' => env('MPESA_C2B_TIMEOUT_BALANCE_URL'),
+        'result_url' => env('MPESA_C2B_RESULT_BALANCE_URL'),
     ],
 ];
