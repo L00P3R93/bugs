@@ -3,7 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Models\MpesaAccountBalance;
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -52,7 +52,7 @@ class MpesaBalanceStatsWidget extends BaseWidget
         ];
     }
 
-    private function formatLastUpdated(?Carbon $date): string
+    private function formatLastUpdated(?CarbonInterface $date): string
     {
         if (! $date) {
             return 'No data yet';
@@ -61,7 +61,7 @@ class MpesaBalanceStatsWidget extends BaseWidget
         return 'Updated '.$date->diffForHumans();
     }
 
-    private function getBalanceColor(?MpesaAccountBalance $balance, Carbon $stale): string
+    private function getBalanceColor(?MpesaAccountBalance $balance, CarbonInterface $stale): string
     {
         if (! $balance || $balance->fetched_at->before($stale)) {
             return 'warning';
