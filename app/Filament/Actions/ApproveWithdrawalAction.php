@@ -120,10 +120,10 @@ class ApproveWithdrawalAction extends Action
                     // Approve: set Withdraw to PENDING (triggers M-Pesa queue)
                     $withdraw->approve(auth()->id());
 
-                    // Deduct balance now that it's approved
+                    // Lock wallet and finalize withdrawal
                     $wallet = $transaction->wallet()->lockForUpdate()->first();
                     $wallet->decrement('balance', $transaction->amount);
-                    $wallet->decrement('available_balance', $transaction->amount);
+                    $wallet->decrement('pending_balance', $transaction->amount);
 
                     // Update transaction status to PENDING
                     $transaction->update([
@@ -141,6 +141,11 @@ class ApproveWithdrawalAction extends Action
                 } else {
                     // Reject
                     $withdraw->reject(auth()->id(), $data['rejection_reason']);
+
+                    // Lock wallet and restore funds
+                    $wallet = $transaction->wallet()->lockForUpdate()->first();
+                    $wallet->increment('available_balance', $transaction->amount);
+                    $wallet->decrement('pending_balance', $transaction->amount);
 
                     // Mark transaction as failed
                     $transaction->update([

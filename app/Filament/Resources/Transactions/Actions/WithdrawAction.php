@@ -29,7 +29,7 @@ class WithdrawAction extends Action
             ->color('indigo')
             ->label('Request Withdrawal')
             ->icon('hugeicons-money-send-flow-02')
-            ->visible(fn () => $wallet && $wallet->balance >= 50 && ! $wallet->is_locked /* && $wallet->hasReachedDailyTarget() */) // Visible so long as balance is >= 50
+            ->visible(fn () => $wallet && $wallet->available_balance >= 50 && ! $wallet->is_locked /* && $wallet->hasReachedDailyTarget() */) // Visible so long as available balance is >= 50
             ->slideOver()
             ->modalWidth('md')
             ->fillForm([
@@ -89,15 +89,37 @@ class WithdrawAction extends Action
                 }
 
                 try {
+                    $amount = $data['amount'];
+
+                    // Lock wallet and reserve funds
+                    $wallet = $wallet->lockForUpdate()->first();
+
+                    if ($wallet->available_balance < $amount) {
+                        Notification::make()
+                            ->title('Insufficient Balance')
+                            ->body('You do not have sufficient available balance for this withdrawal.')
+                            ->danger()
+                            ->persistent()
+                            ->send();
+
+                        return;
+                    }
+
+                    // Reserve funds: move from available to pending
+                    $wallet->decrement('available_balance', $amount);
+                    $wallet->increment('pending_balance', $amount);
+
+                    // Create transaction
                     $wallet->transactions()->create([
-                        'amount' => $data['amount'],
+                        'amount' => $amount,
                         'type' => 'withdraw',
                     ]);
+
                     $livewire->resetTable();
 
                     Notification::make()
                         ->title('Withdrawal Request Submitted')
-                        ->body('Your withdrawal request of KES '.$data['amount'].' has been submitted and is pending admin approval.')
+                        ->body('Your withdrawal request of KES '.$amount.' has been submitted and is pending admin approval.')
                         ->success()
                         ->send();
                 } catch (\Exception $e) {
