@@ -78,6 +78,7 @@ class ProcessDailyPayouts extends Command
 
                 // Step 1: Midnight reset — if last reset was not today, reset daily stats
                 if ($wallet->last_daily_reset_at === null || $wallet->last_daily_reset_at->toDateString() !== $today) {
+                    /*
                     $anyTargetMet = $wallet->daily_target_reached
                         || $wallet->daily_2p_games_target_reached
                         || $wallet->daily_3p_games_target_reached
@@ -90,6 +91,7 @@ class ProcessDailyPayouts extends Command
                         $this->line("Reset balance for tester {$tester->id} ({$tester->name}) — no targets met yesterday.");
                         Log::info("Daily reset: tester {$tester->id} balance zeroed — no daily targets reached.");
                     }
+                     */
                     $wallet->resetDailyStats();
                     $reset++;
                 }
