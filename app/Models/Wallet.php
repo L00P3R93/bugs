@@ -143,9 +143,9 @@ class Wallet extends Model
         }
 
         // Testers must reach daily target before withdrawing
-        if ($this->user->isTester() && ! $this->daily_target_reached) {
+        /*if ($this->user->isTester() && ! $this->daily_target_reached) {
             return false;
-        }
+        }*/
 
         // Check daily limit
         $dailyWithdrawn = $this->withdraws()
