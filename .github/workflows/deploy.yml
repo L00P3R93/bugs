@@ -67,6 +67,13 @@ jobs:
             # Restart PHP 8.4 FPM
             sudo systemctl restart php8.4-fpm
 
+            # Restart Supervisor
+            sudo supervisorctl restart bugs-worker:*
+
             # Bring application back up
             /usr/bin/php8.4 artisan up
+
+            # Build
+            npm install
+            npm run build
           "

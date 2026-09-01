@@ -29,7 +29,7 @@ class WithdrawAction extends Action
             ->color('indigo')
             ->label('Request Withdrawal')
             ->icon('hugeicons-money-send-flow-02')
-            ->visible(fn () => $wallet && $wallet->balance >= 150 && $wallet->hasReachedDailyTarget())
+            ->visible(fn () => $wallet && $wallet->balance >= 50 /* && $wallet->hasReachedDailyTarget() */) // Visible so long as balance is >= 50
             ->slideOver()
             ->modalWidth('md')
             ->fillForm([

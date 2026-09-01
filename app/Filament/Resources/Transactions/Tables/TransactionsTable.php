@@ -41,7 +41,8 @@ class TransactionsTable
                     ->label('Bug')
                     ->searchable()
                     ->placeholder('-')
-                    ->limit(30),
+                    ->limit(30)
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('source')
                     ->label('Source')
