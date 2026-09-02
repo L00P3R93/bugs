@@ -23,26 +23,27 @@ jobs:
 
       - name: Deploy Code
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "
+          ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF'
             set -e
 
-            cd ${{ secrets.DEPLOY_PATH }} || exit 1
-
-            # Pull latest code
-            # git pull origin main
+            cd "${{ secrets.DEPLOY_PATH }}" || exit 1
 
             # Pull latest code with retry
             for i in 1 2 3; do
+              echo "Attempt $i: Pulling latest code..."
+
               if git pull origin main; then
+                echo "Git pull successful."
                 break
               fi
 
               if [ "$i" -eq 3 ]; then
-                echo "git pull failed after 3 attempts"
+                echo "Git pull failed after 3 attempts."
                 exit 1
               fi
 
-              echo "git pull failed. Retrying in 10 seconds..."
+              echo "Git pull failed. Retrying in 10 seconds..."
               sleep 10
             done
 
@@ -72,7 +73,7 @@ jobs:
             /usr/bin/php8.4 artisan view:cache
 
             # Run migrations
-            /usr/bin/php8.4 artisan migrate --force || true
+            /usr/bin/php8.4 artisan migrate --force
 
             # Fix permissions
             sudo chown -R deployer:www-data .
@@ -85,10 +86,10 @@ jobs:
             # Restart Supervisor
             sudo supervisorctl restart bugs-worker:*
 
-            # Build
+            # Build frontend assets
             npm install
             npm run build
 
             # Bring application back up
             /usr/bin/php8.4 artisan up
-          "
+          EOF
