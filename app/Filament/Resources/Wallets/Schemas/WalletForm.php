@@ -61,7 +61,7 @@ class WalletForm
                     ->default('active')
                     ->native(false)
                     ->required(),
-            ])->columns(2)->columnSpan(['lg' => fn (?Wallet $record) => $record === null ? 3 : 2]),
+            ])->columns(2)->columnSpan(['lg' => 3]),
 
             Section::make('Enhanced Wallet Details')->schema([
                 TextInput::make('available_balance')
@@ -87,19 +87,19 @@ class WalletForm
                     ->numeric(),
                 TextInput::make('daily_withdrawal_limit')
                     ->label('Daily Withdrawal Limit')
-                    ->prefixIcon('hugeicons-calendar-today')
+                    ->prefixIcon('hugeicons-calendar-01')
                     ->prefixIconColor('info')
                     ->prefix('KES ')
                     ->numeric()
                     ->default(50000),
                 TextInput::make('monthly_withdrawal_limit')
                     ->label('Monthly Withdrawal Limit')
-                    ->prefixIcon('hugeicons-calendar-month-01')
+                    ->prefixIcon('hugeicons-calendar-03')
                     ->prefixIconColor('info')
                     ->prefix('KES ')
                     ->numeric()
                     ->default(500000),
-            ])->columns(3),
+            ])->columns(3)->columnSpan(['lg' => 3]),
 
             Section::make('Security')->schema([
                 Toggle::make('is_locked')
@@ -115,12 +115,7 @@ class WalletForm
                     ->label('Locked At')
                     ->visible(fn ($get) => $get('is_locked'))
                     ->readonly(),
-            ])->columns(2),
-
-            Section::make()->schema([
-                TextEntry::make('created_at')->state(fn (Wallet $record): ?string => $record->created_at?->diffForHumans()),
-                TextEntry::make('updated_at')->label('Last modified at')->state(fn (Wallet $record): ?string => $record->updated_at?->diffForHumans()),
-            ])->columnSpan(['lg' => 1])->hidden(fn (?Wallet $record) => $record === null),
+            ])->columns(2)->columnSpan(['lg' => 3]),
         ])->columns(3);
     }
 }
