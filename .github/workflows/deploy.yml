@@ -1,8 +1,9 @@
+
 name: Deploy to Production
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   workflow_dispatch:
 
 jobs:
@@ -25,13 +26,20 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF'
+
             set -e
 
             cd "${{ secrets.DEPLOY_PATH }}" || exit 1
 
+            echo "========================================"
+            echo "Starting production deployment"
+            echo "========================================"
+
             # Pull latest code with retry
+            echo "Pulling latest code..."
+
             for i in 1 2 3; do
-              echo "Attempt $i: Pulling latest code..."
+              echo "Git pull attempt $i..."
 
               if git pull origin main; then
                 echo "Git pull successful."
@@ -47,17 +55,26 @@ jobs:
               sleep 10
             done
 
-            # Maintenance mode
+            # Put application into maintenance mode
+            echo "Enabling maintenance mode..."
             /usr/bin/php8.4 artisan down || true
 
-            # Install dependencies with PHP 8.4
+            # If deployment fails after maintenance mode is enabled,
+            # attempt to bring the application back online.
+            trap '/usr/bin/php8.4 artisan up || true' EXIT
+
+            # Install PHP dependencies
+            echo "Installing Composer dependencies..."
+
             /usr/bin/php8.4 /usr/local/bin/composer install \
               --no-interaction \
               --no-dev \
               --optimize-autoloader \
               --no-progress
 
-            # Create storage directories if missing
+            # Create required storage directories
+            echo "Creating required directories..."
+
             mkdir -p storage/framework/cache
             mkdir -p storage/framework/sessions
             mkdir -p storage/framework/views
@@ -66,30 +83,56 @@ jobs:
             mkdir -p storage/app/public
             mkdir -p bootstrap/cache
 
-            # Optimize application
+            # Build frontend assets
+            echo "Installing NPM dependencies..."
+
+            npm install
+
+            echo "Building frontend assets..."
+
+            npm run build
+
+            # Clear and rebuild Laravel caches
+            echo "Optimizing Laravel..."
+
             /usr/bin/php8.4 artisan optimize:clear
             /usr/bin/php8.4 artisan config:cache
             /usr/bin/php8.4 artisan route:cache
             /usr/bin/php8.4 artisan view:cache
 
-            # Run migrations
+            # Run database migrations
+            echo "Running database migrations..."
+
             /usr/bin/php8.4 artisan migrate --force
 
             # Fix permissions
+            echo "Fixing permissions..."
+
             sudo chown -R deployer:www-data .
             sudo chmod -R 775 storage bootstrap/cache
             sudo chmod 640 .env
 
-            # Restart PHP 8.4 FPM
+            # Restart PHP-FPM
+            echo "Restarting PHP 8.4 FPM..."
+
             sudo systemctl restart php8.4-fpm
 
-            # Restart Supervisor
+            # Restart Supervisor workers
+            echo "Restarting Supervisor workers..."
+
             sudo supervisorctl restart bugs-worker:*
 
-            # Build frontend assets
-            npm install
-            npm run build
+            # Bring application back online
+            echo "Disabling maintenance mode..."
 
-            # Bring application back up
             /usr/bin/php8.4 artisan up
+
+            # Deployment completed successfully.
+            # Remove the failure trap so it does not run unnecessarily.
+            trap - EXIT
+
+            echo "========================================"
+            echo "Deployment completed successfully"
+            echo "========================================"
+
           EOF
