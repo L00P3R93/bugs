@@ -85,7 +85,7 @@ class WithdrawAction extends Action
             ])
             ->requiresConfirmation()
             ->modalHeading('Confirm Withdrawal')
-            ->modalDescription(fn (array $state): string => 'Are you sure you want to withdraw KES '.$state['amount'].' to phone number '.$state['phone'].'? Funds will be received in this number.')
+            ->modalDescription(fn (?array $state): string => 'Are you sure you want to withdraw KES '.($state['amount'] ?? '').' to phone number '.($state['phone'] ?? '').'? Funds will be received in this number.')
             ->modalSubmitActionLabel('Yes, Submit Withdrawal')
             ->action(function (array $data, $livewire) use ($wallet, $user): void {
                 $phone = $data['phone'];
