@@ -12,7 +12,7 @@ use Flowframe\Trend\TrendValue;
 
 class TransactionStats extends StatsOverviewWidget
 {
-    protected ?string $pollingInterval = '300s';
+    protected ?string $pollingInterval = '30s';
 
     protected function getStats(): array
     {
@@ -121,7 +121,9 @@ class TransactionStats extends StatsOverviewWidget
             ->whereIn('status', [TransactionStatus::PENDING, TransactionStatus::PENDING_APPROVAL])
             ->sum('amount');
 
-        $myTransactionCount = Transaction::where('user_id', $user->id)->count();
+        $myTransactionCount = Transaction::where('user_id', $user->id)
+            ->whereIn('status', [TransactionStatus::PENDING, TransactionStatus::PENDING_APPROVAL, TransactionStatus::COMPLETED])
+            ->count();
 
         $payoutsTrend = Trend::query(
             Transaction::where('user_id', $user->id)

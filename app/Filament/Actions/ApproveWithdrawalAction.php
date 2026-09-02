@@ -29,7 +29,7 @@ class ApproveWithdrawalAction extends Action
         parent::setUp();
 
         $this
-            ->label('Review Withdrawal')
+            ->label('Review Txn')
             ->icon(Heroicon::OutlinedBanknotes)
             ->color('warning')
             ->slideOver()
@@ -93,6 +93,7 @@ class ApproveWithdrawalAction extends Action
                                 'approve' => 'Approve',
                                 'reject' => 'Reject',
                             ])
+                            ->native(false)
                             ->required()
                             ->live(),
                         Textarea::make('rejection_reason')
