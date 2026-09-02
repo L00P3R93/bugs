@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Transactions;
 
+use App\Enums\TransactionStatus;
+use App\Enums\TransactionType;
 use App\Filament\Resources\Transactions\Pages\CreateTransaction;
 use App\Filament\Resources\Transactions\Pages\EditTransaction;
 use App\Filament\Resources\Transactions\Pages\ListTransactions;
@@ -30,6 +32,29 @@ class TransactionResource extends Resource
     protected static ?int $navigationSort = 1;
 
     protected static ?string $recordTitleAttribute = 'transaction_no';
+
+    public static function getNavigationBadge(): ?string
+    {
+        $query = static::getModel()::query()
+            ->where('type', TransactionType::WITHDRAW)
+            ->where('status', TransactionStatus::PENDING_APPROVAL);
+
+        if (! auth()->user()->isSuperAdmin()) {
+            $query->whereHas(
+                'wallet',
+                fn (Builder $q) => $q->where('user_id', auth()->id())
+            );
+        }
+
+        $count = $query->count();
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): string|array|null
+    {
+        return 'warning';
+    }
 
     public static function form(Schema $schema): Schema
     {

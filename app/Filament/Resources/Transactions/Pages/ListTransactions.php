@@ -32,9 +32,9 @@ class ListTransactions extends ListRecords
     public function getTabs(): array
     {
         return [
-            null => Tab::make('All'),
-            'payouts' => Tab::make('Bug Payouts')->query(fn ($query) => $query->where('type', 'payout')),
             'withdrawals' => Tab::make('Withdrawals')->query(fn ($query) => $query->where('type', 'withdraw')),
+            'payouts' => Tab::make('Payouts')->query(fn ($query) => $query->where('type', 'payout')),
+            null => Tab::make('All'),
         ];
     }
 }

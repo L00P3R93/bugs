@@ -37,6 +37,7 @@ class User extends Authenticatable implements Commenter, FilamentUser, HasAvatar
         'name',
         'email',
         'password',
+        'phone',
         'notification_preferences',
     ];
 
@@ -194,10 +195,17 @@ class User extends Authenticatable implements Commenter, FilamentUser, HasAvatar
     public function setPhoneAttribute($value): void
     {
         $phone = trim($value);
-        // If phone starts with 0, replace with 254
-        if (str_starts_with($phone, '0')) {
+
+        // Strip all non-digits
+        $phone = preg_replace('/\D/', '', $phone);
+
+        // If phone starts with +254 or 254, ensure it starts with 254
+        if (str_starts_with($phone, '254')) {
+            // Already in correct format
+        } elseif (str_starts_with($phone, '0')) {
             $phone = '254'.substr($phone, 1);
         }
+
         $this->attributes['phone'] = $phone;
     }
 

@@ -2,12 +2,16 @@
 
 namespace App\Filament\Resources\Transactions\Actions;
 
+use App\Enums\TransactionStatus;
+use App\Enums\TransactionType;
+use App\Models\Withdraw;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class WithdrawAction extends Action
@@ -29,7 +33,7 @@ class WithdrawAction extends Action
             ->color('indigo')
             ->label('Request Withdrawal')
             ->icon('hugeicons-money-send-flow-02')
-            ->visible(fn () => $wallet && $wallet->available_balance >= 50 && ! $wallet->is_locked /* && $wallet->hasReachedDailyTarget() */) // Visible so long as available balance is >= 50
+            ->visible(fn () => $wallet && $wallet->available_balance >= 50 && ! $wallet->is_locked)
             ->slideOver()
             ->modalWidth('md')
             ->fillForm([
@@ -51,7 +55,10 @@ class WithdrawAction extends Action
 
                         TextInput::make('phone')
                             ->label('Receiver Phone')
-                            ->readonly()
+                            ->required()
+                            ->tel()
+                            ->regex('/^(07\d{8}|01\d{8}|2547\d{8}|2541\d{8})$/')
+                            ->helperText('Allowed formats: 07XXXXXXXX, 01XXXXXXXX, 2547XXXXXXXX, 2541XXXXXXXX')
                             ->prefixIcon(Heroicon::OutlinedPhone)
                             ->prefixIconColor('primary'),
 
@@ -76,11 +83,17 @@ class WithdrawAction extends Action
                             ->placeholder('Enter amount to withdraw'),
                     ]),
             ])
+            ->requiresConfirmation()
+            ->modalHeading('Confirm Withdrawal')
+            ->modalDescription(fn (array $state): string => 'Are you sure you want to withdraw KES '.$state['amount'].' to phone number '.$state['phone'].'? Funds will be received in this number.')
+            ->modalSubmitActionLabel('Yes, Submit Withdrawal')
             ->action(function (array $data, $livewire) use ($wallet, $user): void {
-                if (blank($user->phone)) {
+                $phone = $data['phone'];
+
+                if (blank($phone)) {
                     Notification::make()
                         ->title('Phone Number Required')
-                        ->body('Please add a phone number to your profile before requesting a withdrawal.')
+                        ->body('Please enter a phone number to receive the withdrawal funds.')
                         ->danger()
                         ->persistent()
                         ->send();
@@ -91,37 +104,61 @@ class WithdrawAction extends Action
                 try {
                     $amount = $data['amount'];
 
-                    // Lock wallet and reserve funds
-                    $wallet = $wallet->lockForUpdate()->first();
+                    DB::transaction(function () use ($amount, $phone, $wallet, $user, $livewire) {
+                        // Re-fetch wallet inside transaction with row lock to prevent overdraw
+                        $wallet = $wallet->lockForUpdate()->first();
 
-                    if ($wallet->available_balance < $amount) {
+                        if ($wallet->available_balance < $amount) {
+                            Notification::make()
+                                ->title('Insufficient Balance')
+                                ->body('You do not have sufficient available balance for this withdrawal.')
+                                ->danger()
+                                ->persistent()
+                                ->send();
+
+                            return;
+                        }
+
+                        // Save phone to user account if it was blank
+                        if (blank($user->phone)) {
+                            $user->phone = $phone;
+                            $user->save();
+                        }
+
+                        // Reserve funds: move from available to pending
+                        $wallet->decrement('available_balance', $amount);
+                        $wallet->increment('pending_balance', $amount);
+
+                        // Create transaction
+                        $transaction = $wallet->transactions()->create([
+                            'transaction_no' => 'TRS'.str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT),
+                            'user_id' => $user->id,
+                            'amount' => $amount,
+                            'net_amount' => $amount,
+                            'currency' => 'KES',
+                            'exchange_rate' => 1,
+                            'type' => TransactionType::WITHDRAW,
+                            'status' => TransactionStatus::PENDING_APPROVAL,
+                        ]);
+
+                        // Create the Withdraw record linked to the transaction
+                        Withdraw::create([
+                            'wallet_id' => $wallet->id,
+                            'transaction_id' => $transaction->id,
+                            'phone' => $phone,
+                            'amount' => $amount,
+                            'balance' => $wallet->balance,
+                            'status' => TransactionStatus::PENDING_APPROVAL,
+                        ]);
+
+                        $livewire->resetTable();
+
                         Notification::make()
-                            ->title('Insufficient Balance')
-                            ->body('You do not have sufficient available balance for this withdrawal.')
-                            ->danger()
-                            ->persistent()
+                            ->title('Withdrawal Request Submitted')
+                            ->body('Your withdrawal request of KES '.$amount.' has been submitted and is pending admin approval.')
+                            ->success()
                             ->send();
-
-                        return;
-                    }
-
-                    // Reserve funds: move from available to pending
-                    $wallet->decrement('available_balance', $amount);
-                    $wallet->increment('pending_balance', $amount);
-
-                    // Create transaction
-                    $wallet->transactions()->create([
-                        'amount' => $amount,
-                        'type' => 'withdraw',
-                    ]);
-
-                    $livewire->resetTable();
-
-                    Notification::make()
-                        ->title('Withdrawal Request Submitted')
-                        ->body('Your withdrawal request of KES '.$amount.' has been submitted and is pending admin approval.')
-                        ->success()
-                        ->send();
+                    });
                 } catch (\Exception $e) {
                     Log::error('Withdraw Action failed: ', ['error' => $e->getMessage()]);
 
