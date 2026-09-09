@@ -95,7 +95,7 @@ class WithdrawAction extends Action
                             ->prefixIconColor('primary')
                             ->placeholder('Enter amount to withdraw')
                             ->helperText(
-                                fn () => 'Available balance: KES ' .
+                                fn () => 'Available balance: KES '.
                                     number_format(
                                         $wallet?->available_balance ?? 0,
                                         2
@@ -224,16 +224,11 @@ class WithdrawAction extends Action
                                         ],
                                     ],
                                     [
-                                        'phone.required' =>
-                                            'Please enter a phone number.',
-                                        'phone.regex' =>
-                                            'Please enter a valid Kenyan phone number.',
-                                        'amount.required' =>
-                                            'Please enter an amount to withdraw.',
-                                        'amount.numeric' =>
-                                            'The withdrawal amount must be a number.',
-                                        'amount.min' =>
-                                            'The minimum withdrawal amount is KES 50.',
+                                        'phone.required' => 'Please enter a phone number.',
+                                        'phone.regex' => 'Please enter a valid Kenyan phone number.',
+                                        'amount.required' => 'Please enter an amount to withdraw.',
+                                        'amount.numeric' => 'The withdrawal amount must be a number.',
+                                        'amount.min' => 'The minimum withdrawal amount is KES 50.',
                                     ]
                                 )->validate();
 
@@ -288,8 +283,7 @@ class WithdrawAction extends Action
                                                 < $amount
                                             ) {
                                                 throw ValidationException::withMessages([
-                                                    'amount' =>
-                                                        'You do not have sufficient available balance for this withdrawal.',
+                                                    'amount' => 'You do not have sufficient available balance for this withdrawal.',
                                                 ]);
                                             }
 
@@ -317,20 +311,22 @@ class WithdrawAction extends Action
 
                                             /*
                                              * Create the transaction.
+                                             *
+                                             * The TransactionObserver will automatically create
+                                             * the Withdraw record when this transaction is created.
                                              */
                                             $transaction = $lockedWallet
                                                 ->transactions()
                                                 ->create([
-                                                    'transaction_no' =>
-                                                        'TRS' . str_pad(
-                                                            mt_rand(
-                                                                1,
-                                                                999999
-                                                            ),
-                                                            6,
-                                                            '0',
-                                                            STR_PAD_LEFT
+                                                    'transaction_no' => 'TRS'.str_pad(
+                                                        mt_rand(
+                                                            1,
+                                                            999999
                                                         ),
+                                                        6,
+                                                        '0',
+                                                        STR_PAD_LEFT
+                                                    ),
 
                                                     'user_id' => $user->id,
 
@@ -342,33 +338,10 @@ class WithdrawAction extends Action
 
                                                     'exchange_rate' => 1,
 
-                                                    'type' =>
-                                                        TransactionType::WITHDRAW,
+                                                    'type' => TransactionType::WITHDRAW,
 
-                                                    'status' =>
-                                                        TransactionStatus::PENDING_APPROVAL,
+                                                    'status' => TransactionStatus::PENDING_APPROVAL,
                                                 ]);
-
-                                            /*
-                                             * Create the withdrawal record.
-                                             */
-                                            Withdraw::create([
-                                                'wallet_id' =>
-                                                    $lockedWallet->id,
-
-                                                'transaction_id' =>
-                                                    $transaction->id,
-
-                                                'phone' => $phone,
-
-                                                'amount' => $amount,
-
-                                                'balance' =>
-                                                    $lockedWallet->balance,
-
-                                                'status' =>
-                                                    TransactionStatus::PENDING_APPROVAL,
-                                            ]);
                                         }
                                     );
 
@@ -382,8 +355,8 @@ class WithdrawAction extends Action
                                             'Withdrawal Request Submitted'
                                         )
                                         ->body(
-                                            'Your withdrawal request of KES ' .
-                                            number_format($amount, 2) .
+                                            'Your withdrawal request of KES '.
+                                            number_format($amount, 2).
                                             ' has been submitted and is pending admin approval.'
                                         )
                                         ->success()
@@ -399,8 +372,7 @@ class WithdrawAction extends Action
                                             'amount' => $amount,
                                             'phone' => $phone,
                                             'error' => $e->getMessage(),
-                                            'trace' =>
-                                                $e->getTraceAsString(),
+                                            'trace' => $e->getTraceAsString(),
                                         ]
                                     );
 
