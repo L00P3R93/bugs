@@ -56,5 +56,9 @@
       "Bash(grep -r 'Get $get' C:UsersEMILYDocumentssitesbugsvendorfilamentactionssrc --include=*.php -l)",
       "Bash(grep -r \"Get $get\\\\|Set $set\" \"C:\\\\Users\\\\EMILY\\\\Documents\\\\sites\\\\bugs\\\\vendor\\\\filament\\\\actions\\\\src\" --include=\"*.php\")"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "laravel-boost"
+  ],
+  "enableAllProjectMcpServers": true
 }

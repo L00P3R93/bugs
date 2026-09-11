@@ -7,6 +7,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Pool;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class GameApiService
 {
@@ -55,14 +56,23 @@ class GameApiService
         array $body = [],
         array $query = [],
         int $timeout = 8,
-        int $connectTimeout = 5
+        int $connectTimeout = 5,
+        ?string $idempotencyKey = null
     ): array {
         $url = $this->baseUrl.$path;
 
-        $pending = Http::withHeaders([
+        $headers = [
             'X-API-KEY' => $this->apiKey,
             'Accept' => 'application/json',
-        ])->timeout($timeout)->connectTimeout($connectTimeout);
+        ];
+
+        // GET requests are naturally idempotent and don't carry a body worth
+        // deduplicating; every state-changing verb gets a unique key.
+        if (strtoupper($method) !== 'GET') {
+            $headers['Idempotency-Key'] = $idempotencyKey ?? Str::uuid()->toString();
+        }
+
+        $pending = Http::withHeaders($headers)->timeout($timeout)->connectTimeout($connectTimeout);
 
         try {
             $response = match (strtoupper($method)) {
@@ -168,7 +178,12 @@ class GameApiService
      */
     public function createCustomer(array $data): array
     {
-        return $this->makeRequest('POST', '/customers', $data);
+        // Deterministic key: retries for the same customer reuse the same key
+        // (so the API returns the original result instead of creating a
+        // duplicate wallet), while different customers always get distinct keys.
+        $key = 'customer-create-'.($data['account_no'] ?? Str::uuid()->toString());
+
+        return $this->makeRequest('POST', '/customers', $data, idempotencyKey: $key);
     }
 
     /**
