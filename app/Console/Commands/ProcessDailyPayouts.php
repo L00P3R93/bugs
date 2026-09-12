@@ -78,20 +78,21 @@ class ProcessDailyPayouts extends Command
 
                 // Step 1: Midnight reset — if last reset was not today, reset daily stats
                 if ($wallet->last_daily_reset_at === null || $wallet->last_daily_reset_at->toDateString() !== $today) {
-                    /*
-                    $anyTargetMet = $wallet->daily_target_reached
-                        || $wallet->daily_2p_games_target_reached
-                        || $wallet->daily_3p_games_target_reached
-                        || $wallet->daily_4p_games_target_reached
-                        || $wallet->daily_tournament_target_reached
-                        || $wallet->daily_jackpot_target_reached;
+                    if (config('payouts.features.zero_balance_reset_enabled')) {
+                        $anyTargetMet = $wallet->daily_target_reached
+                            || $wallet->daily_2p_games_target_reached
+                            || $wallet->daily_3p_games_target_reached
+                            || $wallet->daily_4p_games_target_reached
+                            || $wallet->daily_tournament_target_reached
+                            || $wallet->daily_jackpot_target_reached;
 
-                    if (! $anyTargetMet && $wallet->daily_games_played > 0) {
-                        $wallet->resetDailyBalance();
-                        $this->line("Reset balance for tester {$tester->id} ({$tester->name}) — no targets met yesterday.");
-                        Log::info("Daily reset: tester {$tester->id} balance zeroed — no daily targets reached.");
+                        if (! $anyTargetMet && $wallet->daily_games_played > 0) {
+                            $wallet->resetDailyBalance();
+                            $this->line("Reset balance for tester {$tester->id} ({$tester->name}) — no targets met yesterday.");
+                            Log::info("Daily reset: tester {$tester->id} balance zeroed — no daily targets reached.");
+                        }
                     }
-                     */
+
                     $wallet->resetDailyStats();
                     $reset++;
                 }
@@ -103,7 +104,7 @@ class ProcessDailyPayouts extends Command
                 // Step 3: Calculate deltas from previous snapshot
                 $previous = $wallet->daily_stats_snapshot ?? $this->emptyStats();
 
-                $gamesDelta = $this->calculateDelta($previous['games'] ?? [], $current['games'] ?? [], self::GAME_RATES);
+                $gamesDelta = $this->calculateDelta($previous['games'] ?? [], $current['games'] ?? [], self::GAME_RATES, config('payouts.features.game_earnings'));
                 $tournamentDelta = max(0, ($current['tournament']['total'] ?? 0) - ($previous['tournament']['total'] ?? 0));
                 $jackpotDelta = max(0, ($current['jackpots']['total'] ?? 0) - ($previous['jackpots']['total'] ?? 0));
 
@@ -118,8 +119,8 @@ class ProcessDailyPayouts extends Command
 
                 // Step 4: Calculate earnings
                 $gamesEarnings = $gamesDelta['earnings'];
-                $tournamentEarnings = $tournamentDelta * self::TOURNAMENT_RATE;
-                $jackpotEarnings = $jackpotDelta * self::JACKPOT_RATE;
+                $tournamentEarnings = config('payouts.features.tournament_earnings_enabled') ? $tournamentDelta * self::TOURNAMENT_RATE : 0.0;
+                $jackpotEarnings = config('payouts.features.jackpot_earnings_enabled') ? $jackpotDelta * self::JACKPOT_RATE : 0.0;
                 $totalEarnings = $gamesEarnings + $tournamentEarnings + $jackpotEarnings;
 
                 DB::transaction(function () use ($jackpotEarnings, $tournamentEarnings, $gamesEarnings, $wallet, $tester, $totalEarnings, $totalNewGames, $gamesDelta, $tournamentDelta, $jackpotDelta, $current, $today, &$paid, &$paidDetails, &$totalAmount) {
@@ -163,11 +164,13 @@ class ProcessDailyPayouts extends Command
                 $tournamentTotal = $current['tournament']['total'] ?? 0;
                 $jackpotTotal = $current['jackpots']['total'] ?? 0;
 
-                $games2pMet = ($current['games']['2_players'] ?? 0) >= self::GAME_TARGETS['2_players'];
-                $games3pMet = ($current['games']['3_players'] ?? 0) >= self::GAME_TARGETS['3_players'];
-                $games4pMet = ($current['games']['4_players'] ?? 0) >= self::GAME_TARGETS['4_players'];
-                $tournamentMet = $tournamentTotal >= self::TOURNAMENT_TARGET;
-                $jackpotMet = $jackpotTotal >= self::JACKPOT_TARGET;
+                $targetTracking = config('payouts.features.target_tracking');
+
+                $games2pMet = $targetTracking['2_players'] && ($current['games']['2_players'] ?? 0) >= self::GAME_TARGETS['2_players'];
+                $games3pMet = $targetTracking['3_players'] && ($current['games']['3_players'] ?? 0) >= self::GAME_TARGETS['3_players'];
+                $games4pMet = $targetTracking['4_players'] && ($current['games']['4_players'] ?? 0) >= self::GAME_TARGETS['4_players'];
+                $tournamentMet = $targetTracking['tournament'] && $tournamentTotal >= self::TOURNAMENT_TARGET;
+                $jackpotMet = $targetTracking['jackpot'] && $jackpotTotal >= self::JACKPOT_TARGET;
 
                 $updates = [];
 
@@ -247,7 +250,12 @@ class ProcessDailyPayouts extends Command
         return self::SUCCESS;
     }
 
-    private function calculateDelta(array $previous, array $current, array $rates): array
+    /**
+     * @param  array<string, float>  $rates
+     * @param  array<string, bool>  $earningsEnabled  Whether each game type's played delta is paid out.
+     * @return array{total: int, earnings: float}
+     */
+    private function calculateDelta(array $previous, array $current, array $rates, array $earningsEnabled): array
     {
         $total = 0;
         $earnings = 0.0;
@@ -257,7 +265,10 @@ class ProcessDailyPayouts extends Command
             $curr = $current[$key] ?? 0;
             $delta = max(0, $curr - $prev);
             $total += $delta;
-            $earnings += $delta * $rate;
+
+            if ($earningsEnabled[$key] ?? true) {
+                $earnings += $delta * $rate;
+            }
         }
 
         return [
